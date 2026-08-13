@@ -44,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               letterSpacing: "0.16em",
             }}
           >
-            © 2026 ARCADE VAULT · v2.6.0
+            © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
           </footer>
         </div>
       </body>
