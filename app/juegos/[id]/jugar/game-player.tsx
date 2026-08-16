@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "../../../data/games";
+import { createClient } from "../../../lib/supabase/client";
 import AsteroidsCanvas, { type AsteroidsCanvasHandle } from "./asteroids-canvas";
 import type { AsteroidsStats } from "./asteroids-engine";
 
@@ -20,6 +21,8 @@ export default function GamePlayer({ game }: { game: Game }) {
   const [over, setOver] = useState(false);
   const [name, setName] = useState("INVITADO");
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [resetKey, setResetKey] = useState(0);
   const [asteroidsStats, setAsteroidsStats] = useState<AsteroidsStats>(INITIAL_ASTEROIDS_STATS);
   const asteroidsRef = useRef<AsteroidsCanvasHandle>(null);
@@ -40,11 +43,32 @@ export default function GamePlayer({ game }: { game: Game }) {
     setPaused(false);
     setOver(false);
     setSaved(false);
+    setSaving(false);
+    setSaveError(false);
     setName("INVITADO");
     if (isAsteroids) {
       setAsteroidsStats(INITIAL_ASTEROIDS_STATS);
       setResetKey((k) => k + 1);
     }
+  };
+
+  const saveScore = async () => {
+    if (!isAsteroids) {
+      setSaved(true);
+      return;
+    }
+    setSaving(true);
+    setSaveError(false);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("scores")
+      .insert({ game_id: "asteroides", player_name: name, score });
+    setSaving(false);
+    if (error) {
+      setSaveError(true);
+      return;
+    }
+    setSaved(true);
   };
 
   return (
@@ -142,9 +166,17 @@ export default function GamePlayer({ game }: { game: Game }) {
                   onChange={(e) => setName(e.target.value.toUpperCase().slice(0, 10))}
                   placeholder="TUS INICIALES"
                 />
-                <button className="btn yellow" onClick={() => setSaved(true)}>
-                  GUARDAR PUNTUACIÓN
+                <button className="btn yellow" onClick={saveScore} disabled={saving}>
+                  {saving ? "GUARDANDO…" : "GUARDAR PUNTUACIÓN"}
                 </button>
+                {saveError && (
+                  <div
+                    className="mono"
+                    style={{ color: "var(--magenta)", fontSize: 11, marginTop: 8 }}
+                  >
+                    ▸ ERROR AL GUARDAR. INTENTA DE NUEVO_
+                  </div>
+                )}
               </div>
             ) : (
               <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
