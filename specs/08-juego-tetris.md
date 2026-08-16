@@ -1,6 +1,6 @@
 # 08 — Juego Tetris
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Depende de:** SPEC 05, SPEC 06, SPEC 07
 **Fecha:** 2026-08-16
 
