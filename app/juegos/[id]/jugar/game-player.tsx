@@ -78,7 +78,7 @@ export default function GamePlayer({ game }: { game: Game }) {
           <div className="hud-stat">
             <div className="l">Jugador</div>
             <div className="v" style={{ color: "var(--ink)" }}>
-              INVITADO
+              {name.trim() || "INVITADO"}
             </div>
           </div>
           <div className="hud-stat">
