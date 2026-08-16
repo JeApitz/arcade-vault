@@ -1,26 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "../../../data/games";
+import AsteroidsCanvas, { type AsteroidsCanvasHandle } from "./asteroids-canvas";
+import type { AsteroidsStats } from "./asteroids-engine";
 
 const DEMO_SCORE = 15420;
 const DEMO_LIVES = 3;
 const DEMO_LEVEL = 1;
 
+const INITIAL_ASTEROIDS_STATS: AsteroidsStats = { score: 0, lives: 3, level: 1, status: "playing" };
+
 export default function GamePlayer({ game }: { game: Game }) {
   const router = useRouter();
+  const isAsteroids = game.id === "asteroides";
+
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [name, setName] = useState("INVITADO");
   const [saved, setSaved] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
+  const [asteroidsStats, setAsteroidsStats] = useState<AsteroidsStats>(INITIAL_ASTEROIDS_STATS);
+  const asteroidsRef = useRef<AsteroidsCanvasHandle>(null);
 
-  const endGame = () => setOver(true);
+  const score = isAsteroids ? asteroidsStats.score : DEMO_SCORE;
+  const lives = isAsteroids ? asteroidsStats.lives : DEMO_LIVES;
+  const level = isAsteroids ? asteroidsStats.level : DEMO_LEVEL;
+  const showModal = over || (isAsteroids && asteroidsStats.status === "gameover");
+
+  const endGame = () => {
+    if (isAsteroids) {
+      asteroidsRef.current?.forceGameOver();
+    } else {
+      setOver(true);
+    }
+  };
   const restart = () => {
     setPaused(false);
     setOver(false);
     setSaved(false);
     setName("INVITADO");
+    if (isAsteroids) {
+      setAsteroidsStats(INITIAL_ASTEROIDS_STATS);
+      setResetKey((k) => k + 1);
+    }
   };
 
   return (
@@ -35,15 +59,15 @@ export default function GamePlayer({ game }: { game: Game }) {
           </div>
           <div className="hud-stat">
             <div className="l">Puntuación</div>
-            <div className="v">{DEMO_SCORE.toLocaleString("es-ES")}</div>
+            <div className="v">{score.toLocaleString("es-ES")}</div>
           </div>
           <div className="hud-stat lives">
             <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(DEMO_LIVES).trim()}</div>
+            <div className="v">{"♥ ".repeat(lives).trim()}</div>
           </div>
           <div className="hud-stat level">
             <div className="l">Nivel</div>
-            <div className="v">{String(DEMO_LEVEL).padStart(2, "0")}</div>
+            <div className="v">{String(level).padStart(2, "0")}</div>
           </div>
         </div>
         <div className="hud-actions">
@@ -61,13 +85,22 @@ export default function GamePlayer({ game }: { game: Game }) {
 
       <div className="crt">
         <div className="crt-screen">
-          <div className="game-arena">
-            <div className="grid-floor"></div>
-            <div className="enemy e1"></div>
-            <div className="enemy e2"></div>
-            <div className="enemy e3"></div>
-            <div className="player-ship"></div>
-          </div>
+          {isAsteroids ? (
+            <AsteroidsCanvas
+              key={resetKey}
+              ref={asteroidsRef}
+              onStats={setAsteroidsStats}
+              paused={paused}
+            />
+          ) : (
+            <div className="game-arena">
+              <div className="grid-floor"></div>
+              <div className="enemy e1"></div>
+              <div className="enemy e2"></div>
+              <div className="enemy e3"></div>
+              <div className="player-ship"></div>
+            </div>
+          )}
           {paused && (
             <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
               <div>
@@ -76,7 +109,12 @@ export default function GamePlayer({ game }: { game: Game }) {
                 </div>
                 <div
                   className="mono"
-                  style={{ fontSize: 11, color: "var(--ink-dim)", marginTop: 10, letterSpacing: "0.16em" }}
+                  style={{
+                    fontSize: 11,
+                    color: "var(--ink-dim)",
+                    marginTop: 10,
+                    letterSpacing: "0.16em",
+                  }}
                 >
                   PULSA REANUDAR PARA CONTINUAR
                 </div>
@@ -91,12 +129,12 @@ export default function GamePlayer({ game }: { game: Game }) {
         </div>
       </div>
 
-      {over && (
+      {showModal && (
         <div className="modal-bd">
           <div className="modal">
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
-            <div className="final">{DEMO_SCORE.toLocaleString("es-ES")}</div>
+            <div className="final">{score.toLocaleString("es-ES")}</div>
             {!saved ? (
               <div className="input-row">
                 <input
