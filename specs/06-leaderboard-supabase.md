@@ -1,6 +1,6 @@
 # 06 — Leaderboard y tabla de juegos en Supabase
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Depende de:** SPEC 04, SPEC 05
 **Fecha:** 2026-08-15
 
@@ -68,16 +68,16 @@ Lectura en `/salon` para ASTEROIDES: `select player_name, score, created_at from
 
 ## Criterios de aceptación
 
-- [ ] Las tablas `games` (9 filas sembradas) y `scores` (vacía, con FK a `games.id`) existen en el proyecto de Supabase.
-- [ ] `scores` tiene RLS habilitado, con `insert` y `select` públicos, sin `update` ni `delete` públicos.
-- [ ] Jugar una partida de ASTEROIDES hasta game over, escribir iniciales y presionar `GUARDAR PUNTUACIÓN` inserta una fila real en `scores` con el `player_name` y `score` correctos.
-- [ ] Mientras el insert está en curso, el botón `GUARDAR PUNTUACIÓN` muestra un estado de carga y no permite doble click; si el insert falla, se muestra un error y no se marca como guardado.
-- [ ] `/salon`, pestaña ASTEROIDES, muestra los puntajes reales de `scores` (top 12 por score), incluyendo partidas recién guardadas tras recargar la página.
-- [ ] `/salon`, pestaña ASTEROIDES, sin ningún score guardado en la tabla, muestra un estado vacío en vez de romperse por falta de datos en el podio.
-- [ ] `/salon` para el resto de juegos (`caida`, `rocas`, etc.) sigue mostrando `seededScores` exactamente igual que antes, sin llamadas a Supabase.
-- [ ] El modal de fin de partida del resto de juegos (mock) sigue siendo visual, sin insertar nada en `scores`.
-- [ ] El campo `best` mostrado en `/games` y `/juegos/asteroides` sigue siendo el valor estático de `games.ts` (63700), sin leer de Supabase.
-- [ ] `npm run build` compila sin errores de tipos ni de rutas.
+- [x] Las tablas `games` (9 filas sembradas) y `scores` (vacía, con FK a `games.id`) existen en el proyecto de Supabase.
+- [x] `scores` tiene RLS habilitado, con `insert` y `select` públicos, sin `update` ni `delete` públicos.
+- [x] Jugar una partida de ASTEROIDES hasta game over, escribir iniciales y presionar `GUARDAR PUNTUACIÓN` inserta una fila real en `scores` con el `player_name` y `score` correctos.
+- [x] Mientras el insert está en curso, el botón `GUARDAR PUNTUACIÓN` muestra un estado de carga y no permite doble click; si el insert falla, se muestra un error y no se marca como guardado.
+- [x] `/salon`, pestaña ASTEROIDES, muestra los puntajes reales de `scores` (top 12 por score), incluyendo partidas recién guardadas tras recargar la página.
+- [x] `/salon`, pestaña ASTEROIDES, sin ningún score guardado en la tabla, muestra un estado vacío en vez de romperse por falta de datos en el podio.
+- [x] `/salon` para el resto de juegos (`caida`, `rocas`, etc.) sigue mostrando `seededScores` exactamente igual que antes, sin llamadas a Supabase.
+- [x] El modal de fin de partida del resto de juegos (mock) sigue siendo visual, sin insertar nada en `scores`.
+- [x] El campo `best` mostrado en `/games` y `/juegos/asteroides` sigue siendo el valor estático de `games.ts` (63700), sin leer de Supabase.
+- [x] `npm run build` compila sin errores de tipos ni de rutas.
 
 ## Decisiones tomadas y descartadas
 
