@@ -2,17 +2,18 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { TetrisEngine, type TetrisStats } from "./tetris-engine";
+import type { GameCanvasHandle, GameCanvasProps } from "./engines";
 
-export interface TetrisCanvasHandle {
-  forceGameOver: () => void;
-}
+export type TetrisCanvasHandle = GameCanvasHandle;
 
-interface TetrisCanvasProps {
-  onStats: (stats: TetrisStats) => void;
-  paused: boolean;
-}
+const toGameStats = (stats: TetrisStats) => ({
+  score: stats.score,
+  secondary: stats.lines,
+  level: stats.level,
+  status: stats.status,
+});
 
-const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(function TetrisCanvas(
+const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function TetrisCanvas(
   { onStats, paused },
   ref
 ) {
@@ -29,7 +30,9 @@ const TetrisCanvas = forwardRef<TetrisCanvasHandle, TetrisCanvasProps>(function 
     const nextCanvas = nextCanvasRef.current;
     if (!boardCanvas || !nextCanvas) return;
 
-    const engine = new TetrisEngine(boardCanvas, nextCanvas, onStats);
+    const engine = new TetrisEngine(boardCanvas, nextCanvas, (stats) =>
+      onStats(toGameStats(stats))
+    );
     engineRef.current = engine;
     engine.start();
 

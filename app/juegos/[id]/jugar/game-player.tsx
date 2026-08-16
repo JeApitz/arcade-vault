@@ -4,65 +4,46 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "../../../data/games";
 import { createClient } from "../../../lib/supabase/client";
-import AsteroidsCanvas, { type AsteroidsCanvasHandle } from "./asteroids-canvas";
-import type { AsteroidsStats } from "./asteroids-engine";
-
-const DEMO_SCORE = 15420;
-const DEMO_LIVES = 3;
-const DEMO_LEVEL = 1;
-
-const INITIAL_ASTEROIDS_STATS: AsteroidsStats = { score: 0, lives: 3, level: 1, status: "playing" };
+import { ENGINES, type GameCanvasHandle, type GameStats } from "./engines";
 
 export default function GamePlayer({ game }: { game: Game }) {
   const router = useRouter();
-  const isAsteroids = game.id === "asteroides";
+  const engine = ENGINES[game.id];
 
   const [paused, setPaused] = useState(false);
-  const [over, setOver] = useState(false);
   const [name, setName] = useState("INVITADO");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [resetKey, setResetKey] = useState(0);
-  const [asteroidsStats, setAsteroidsStats] = useState<AsteroidsStats>(INITIAL_ASTEROIDS_STATS);
-  const asteroidsRef = useRef<AsteroidsCanvasHandle>(null);
+  const [stats, setStats] = useState<GameStats>(
+    engine?.initialStats ?? { score: 0, secondary: 0, level: 1, status: "playing" }
+  );
+  const canvasRef = useRef<GameCanvasHandle>(null);
 
-  const score = isAsteroids ? asteroidsStats.score : DEMO_SCORE;
-  const lives = isAsteroids ? asteroidsStats.lives : DEMO_LIVES;
-  const level = isAsteroids ? asteroidsStats.level : DEMO_LEVEL;
-  const showModal = over || (isAsteroids && asteroidsStats.status === "gameover");
+  const { score, secondary, level } = stats;
+  const showModal = stats.status === "gameover";
 
   const endGame = () => {
-    if (isAsteroids) {
-      asteroidsRef.current?.forceGameOver();
-    } else {
-      setOver(true);
-    }
+    canvasRef.current?.forceGameOver();
   };
   const restart = () => {
     setPaused(false);
-    setOver(false);
     setSaved(false);
     setSaving(false);
     setSaveError(false);
     setName("INVITADO");
-    if (isAsteroids) {
-      setAsteroidsStats(INITIAL_ASTEROIDS_STATS);
-      setResetKey((k) => k + 1);
-    }
+    if (engine) setStats(engine.initialStats);
+    setResetKey((k) => k + 1);
   };
 
   const saveScore = async () => {
-    if (!isAsteroids) {
-      setSaved(true);
-      return;
-    }
     setSaving(true);
     setSaveError(false);
     const supabase = createClient();
     const { error } = await supabase
       .from("scores")
-      .insert({ game_id: "asteroides", player_name: name, score });
+      .insert({ game_id: game.id, player_name: name, score });
     setSaving(false);
     if (error) {
       setSaveError(true);
@@ -85,9 +66,11 @@ export default function GamePlayer({ game }: { game: Game }) {
             <div className="l">Puntuación</div>
             <div className="v">{score.toLocaleString("es-ES")}</div>
           </div>
-          <div className="hud-stat lives">
-            <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(lives).trim()}</div>
+          <div className={`hud-stat${engine?.hudLabel === "VIDAS" ? " lives" : ""}`}>
+            <div className="l">{engine?.hudLabel ?? ""}</div>
+            <div className="v">
+              {engine?.hudLabel === "VIDAS" ? "♥ ".repeat(secondary).trim() : secondary}
+            </div>
           </div>
           <div className="hud-stat level">
             <div className="l">Nivel</div>
@@ -109,21 +92,8 @@ export default function GamePlayer({ game }: { game: Game }) {
 
       <div className="crt">
         <div className="crt-screen">
-          {isAsteroids ? (
-            <AsteroidsCanvas
-              key={resetKey}
-              ref={asteroidsRef}
-              onStats={setAsteroidsStats}
-              paused={paused}
-            />
-          ) : (
-            <div className="game-arena">
-              <div className="grid-floor"></div>
-              <div className="enemy e1"></div>
-              <div className="enemy e2"></div>
-              <div className="enemy e3"></div>
-              <div className="player-ship"></div>
-            </div>
+          {engine && (
+            <engine.Canvas key={resetKey} ref={canvasRef} onStats={setStats} paused={paused} />
           )}
           {paused && (
             <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>

@@ -1,0 +1,42 @@
+// Registro de motores de juego: mapea el id de un juego real a su componente
+// de canvas y al estado inicial de su HUD. Único punto que game-player.tsx
+// consulta para saber cómo renderizar un juego, en vez del `if` puntual previo.
+
+import type { ForwardRefExoticComponent, RefAttributes } from "react";
+import AsteroidsCanvas from "./asteroids-canvas";
+import TetrisCanvas from "./tetris-canvas";
+
+export interface GameStats {
+  score: number;
+  secondary: number; // vidas, líneas, ... según el juego
+  level: number;
+  status: "playing" | "dead" | "gameover";
+}
+
+export interface GameCanvasHandle {
+  forceGameOver: () => void;
+}
+
+export interface GameCanvasProps {
+  onStats: (stats: GameStats) => void;
+  paused: boolean;
+}
+
+interface GameEngineEntry {
+  Canvas: ForwardRefExoticComponent<GameCanvasProps & RefAttributes<GameCanvasHandle>>;
+  hudLabel: string; // "VIDAS" | "LÍNEAS" | ...
+  initialStats: GameStats;
+}
+
+export const ENGINES: Record<string, GameEngineEntry> = {
+  asteroides: {
+    Canvas: AsteroidsCanvas,
+    hudLabel: "VIDAS",
+    initialStats: { score: 0, secondary: 3, level: 1, status: "playing" },
+  },
+  tetris: {
+    Canvas: TetrisCanvas,
+    hudLabel: "LÍNEAS",
+    initialStats: { score: 0, secondary: 0, level: 1, status: "playing" },
+  },
+};
