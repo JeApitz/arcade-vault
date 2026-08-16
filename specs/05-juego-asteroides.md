@@ -1,6 +1,6 @@
 # 05 — Juego Asteroides
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Depende de:** —
 **Fecha:** 2026-08-15
 
