@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GAMES, seededScores } from "../../data/games";
+import { getGame } from "../../lib/games";
+import { getTopScores } from "../../lib/scores";
 
 export default async function GameDetailPage(props: PageProps<"/juegos/[id]">) {
   const { id } = await props.params;
-  const game = GAMES.find((g) => g.id === id);
+  const game = await getGame(id);
   if (!game) notFound();
 
-  const scores = seededScores(id.length * 17 + 3, 10);
+  const scores = await getTopScores(id, 10);
 
   return (
     <div className="av-detail fade-in">
@@ -62,21 +63,32 @@ export default async function GameDetailPage(props: PageProps<"/juegos/[id]">) {
       <aside>
         <div className="leaderboard">
           <h3>MEJORES PUNTUACIONES</h3>
-          {scores.map((r, i) => (
-            <div
-              key={r.name}
-              className={"lb-row" + (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")}
+          {scores.length === 0 ? (
+            <p
+              className="mono"
+              style={{ fontSize: 11, color: "var(--ink-dim)", padding: "16px 0" }}
             >
-              <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
-              <div className="pl">
-                {r.name}
-                <div style={{ fontSize: 10, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
-                  {r.date}
+              AÚN NO HAY PUNTUACIONES GUARDADAS_
+            </p>
+          ) : (
+            scores.map((r, i) => (
+              <div
+                key={r.name + i}
+                className={
+                  "lb-row" + (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")
+                }
+              >
+                <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
+                <div className="pl">
+                  {r.name}
+                  <div style={{ fontSize: 10, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
+                    {r.date}
+                  </div>
                 </div>
+                <div className="sc">{r.score.toLocaleString("es-ES")}</div>
               </div>
-              <div className="sc">{r.score.toLocaleString("es-ES")}</div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </aside>
     </div>
