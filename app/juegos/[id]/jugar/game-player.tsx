@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "../../../data/games";
 import { createClient } from "../../../lib/supabase/client";
@@ -91,7 +91,10 @@ export default function GamePlayer({ game }: { game: Game }) {
       </div>
 
       <div className="crt">
-        <div className="crt-screen">
+        <div
+          className="crt-screen"
+          style={{ "--crt-aspect": engine?.crtAspect ?? "4 / 3" } as CSSProperties}
+        >
           {engine && (
             <engine.Canvas key={resetKey} ref={canvasRef} onStats={setStats} paused={paused} />
           )}
@@ -121,6 +124,7 @@ export default function GamePlayer({ game }: { game: Game }) {
           <span>{game.title} · CRT-83 · 60 HZ</span>
           <span>CARGA · 1MB</span>
         </div>
+        <div className="mono kbd-notice">▸ ESTE JUEGO REQUIERE TECLADO_</div>
       </div>
 
       {showModal && (
