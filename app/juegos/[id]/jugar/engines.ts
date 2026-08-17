@@ -5,6 +5,7 @@
 import type { ForwardRefExoticComponent, RefAttributes } from "react";
 import AsteroidsCanvas from "./asteroids-canvas";
 import TetrisCanvas from "./tetris-canvas";
+import ArkanoidCanvas from "./arkanoid-canvas";
 
 export interface GameStats {
   score: number;
@@ -20,6 +21,7 @@ export interface GameCanvasHandle {
 export interface GameCanvasProps {
   onStats: (stats: GameStats) => void;
   paused: boolean;
+  onPauseChange?: (paused: boolean) => void;
 }
 
 interface GameEngineEntry {
@@ -27,6 +29,7 @@ interface GameEngineEntry {
   hudLabel: string; // "VIDAS" | "LÍNEAS" | ...
   initialStats: GameStats;
   crtAspect: string; // relación de aspecto del marco CRT, según la forma del campo de juego
+  hidePauseOverlay?: boolean; // true si el propio motor dibuja su overlay de pausa en el canvas
 }
 
 export const ENGINES: Record<string, GameEngineEntry> = {
@@ -41,5 +44,12 @@ export const ENGINES: Record<string, GameEngineEntry> = {
     hudLabel: "LÍNEAS",
     initialStats: { score: 0, secondary: 0, level: 1, status: "playing" },
     crtAspect: "4 / 5",
+  },
+  arkanoid: {
+    Canvas: ArkanoidCanvas,
+    hudLabel: "VIDAS",
+    initialStats: { score: 0, secondary: 3, level: 1, status: "playing" },
+    crtAspect: "4 / 3",
+    hidePauseOverlay: true,
   },
 };
