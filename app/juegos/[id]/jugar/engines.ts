@@ -26,6 +26,7 @@ interface GameEngineEntry {
   Canvas: ForwardRefExoticComponent<GameCanvasProps & RefAttributes<GameCanvasHandle>>;
   hudLabel: string; // "VIDAS" | "LÍNEAS" | ...
   initialStats: GameStats;
+  crtAspect: string; // relación de aspecto del marco CRT, según la forma del campo de juego
 }
 
 export const ENGINES: Record<string, GameEngineEntry> = {
@@ -33,10 +34,12 @@ export const ENGINES: Record<string, GameEngineEntry> = {
     Canvas: AsteroidsCanvas,
     hudLabel: "VIDAS",
     initialStats: { score: 0, secondary: 3, level: 1, status: "playing" },
+    crtAspect: "4 / 3",
   },
   tetris: {
     Canvas: TetrisCanvas,
     hudLabel: "LÍNEAS",
     initialStats: { score: 0, secondary: 0, level: 1, status: "playing" },
+    crtAspect: "4 / 5",
   },
 };

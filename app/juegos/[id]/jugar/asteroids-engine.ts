@@ -554,6 +554,64 @@ export class AsteroidsEngine {
     this.powerUps.forEach((p) => p.draw(ctx));
     this.bullets.forEach((b) => b.draw(ctx));
     this.ship.draw(ctx);
+    this.drawHUD();
+
+    if (this.status === "gameover") {
+      this.drawOverlay("GAME OVER", `PUNTAJE: ${this.score}`);
+    }
+  }
+
+  private drawLifeIcon(x: number, y: number) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-Math.PI / 2);
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 1.2;
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(9, 0);
+    ctx.lineTo(-6, -5);
+    ctx.lineTo(-3, 0);
+    ctx.lineTo(-6, 5);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  private drawHUD() {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.fillStyle = "#fff";
+    ctx.font = "15px monospace";
+
+    ctx.textAlign = "left";
+    ctx.fillText(`SCORE  ${this.score}`, 14, 26);
+
+    ctx.textAlign = "center";
+    ctx.fillText(`NIVEL ${this.level}`, W / 2, 26);
+
+    for (let i = 0; i < this.lives; i++) this.drawLifeIcon(W - 16 - i * 22, 18);
+
+    if (this.ship.tripleShot > 0) {
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#0ff";
+      ctx.fillText(`3x  ${this.ship.tripleShot.toFixed(1)}s`, 14, 46);
+    }
+    ctx.restore();
+  }
+
+  private drawOverlay(title: string, sub: string) {
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 46px monospace";
+    ctx.fillText(title, W / 2, H / 2 - 18);
+    ctx.font = "18px monospace";
+    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.fillText(sub, W / 2, H / 2 + 22);
+    ctx.restore();
   }
 
   private loop(ts: number) {
