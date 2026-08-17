@@ -1,6 +1,6 @@
 # 09 — Juego Arkanoid
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Depende de:** SPEC 05, SPEC 06, SPEC 07, SPEC 08
 **Fecha:** 2026-08-17
 
