@@ -96,9 +96,15 @@ export default function GamePlayer({ game }: { game: Game }) {
           style={{ "--crt-aspect": engine?.crtAspect ?? "4 / 3" } as CSSProperties}
         >
           {engine && (
-            <engine.Canvas key={resetKey} ref={canvasRef} onStats={setStats} paused={paused} />
+            <engine.Canvas
+              key={resetKey}
+              ref={canvasRef}
+              onStats={setStats}
+              paused={paused}
+              onPauseChange={setPaused}
+            />
           )}
-          {paused && (
+          {paused && !engine?.hidePauseOverlay && (
             <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
               <div>
                 <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
