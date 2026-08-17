@@ -6,6 +6,7 @@ import type { ForwardRefExoticComponent, RefAttributes } from "react";
 import AsteroidsCanvas from "./asteroids-canvas";
 import TetrisCanvas from "./tetris-canvas";
 import ArkanoidCanvas from "./arkanoid-canvas";
+import SnakeCanvas from "./snake-canvas";
 
 export interface GameStats {
   score: number;
@@ -51,5 +52,11 @@ export const ENGINES: Record<string, GameEngineEntry> = {
     initialStats: { score: 0, secondary: 3, level: 1, status: "playing" },
     crtAspect: "4 / 3",
     hidePauseOverlay: true,
+  },
+  snake: {
+    Canvas: SnakeCanvas,
+    hudLabel: "LONGITUD",
+    initialStats: { score: 0, secondary: 1, level: 1, status: "playing" },
+    crtAspect: "1 / 1",
   },
 };
