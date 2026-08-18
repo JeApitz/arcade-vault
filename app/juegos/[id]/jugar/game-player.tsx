@@ -162,6 +162,9 @@ export default function GamePlayer({ game }: { game: Game }) {
               <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
             )}
             <div className="actions">
+              <button className="btn gold" onClick={() => router.push(`/salon?juego=${game.id}`)}>
+                VER RANKING
+              </button>
               <button className="btn" onClick={restart}>
                 JUGAR DE NUEVO
               </button>

@@ -391,6 +391,15 @@ a {
     0 0 14px rgba(245, 255, 0, 0.6),
     inset 0 0 8px rgba(245, 255, 0, 0.35);
 }
+.btn.gold {
+  border-color: var(--gold);
+}
+.btn.gold:hover {
+  color: var(--gold);
+  box-shadow:
+    0 0 14px rgba(255, 207, 58, 0.55),
+    inset 0 0 8px rgba(255, 207, 58, 0.35);
+}
 .btn.ghost {
   border-color: var(--ink-faint);
   color: var(--ink-dim);
