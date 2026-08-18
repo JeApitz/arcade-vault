@@ -1,6 +1,6 @@
 # 10 — Juego Snake
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Depende de:** SPEC 06, SPEC 07
 **Fecha:** 2026-08-17
 **Objetivo:** Construir desde cero un Snake clásico en grilla dentro de Arcade Vault, con sprites de fruta reales, HUD propio en canvas (fruta/score, trofeo/mejor puntaje) y su entrada en `engines.ts` y en el catálogo/leaderboard de Supabase.
