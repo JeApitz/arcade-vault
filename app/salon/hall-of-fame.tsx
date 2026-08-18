@@ -6,8 +6,8 @@ import type { Game, ScoreRow } from "../data/games";
 import { createClient } from "../lib/supabase/client";
 import { formatDate } from "../lib/format";
 
-export default function HallOfFame({ games }: { games: Game[] }) {
-  const [tab, setTab] = useState(games[0]?.id ?? "");
+export default function HallOfFame({ games, initialTab }: { games: Game[]; initialTab?: string }) {
+  const [tab, setTab] = useState(initialTab || games[0]?.id || "");
 
   const [rows, setRows] = useState<ScoreRow[]>([]);
   const [state, setState] = useState<"loading" | "ready" | "few" | "empty" | "error">("loading");
