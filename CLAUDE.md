@@ -14,6 +14,7 @@ There is no test runner configured yet.
 
 - Usa siempre /frontend-design para diseñar la interfaz de usuario.
 - Usa /spec-game para diseñar el spec de un juego nuevo antes de programarlo (motor, canvas, catálogo en Supabase, leaderboard). Pregunta antes de escribir.
+- Usa el agente `game-planner` (solo bajo petición explícita) para decidir qué juego nuevo agregar; su memoria de sugerencias vive en `references/game-suggestions-todo.md`. Su salida alimenta `/spec-game`.
 - Antes de implementar un juego nuevo, revisa `references/implemented-games.md` para saber qué juegos ya están implementados (ID, título, categoría, descripción breve, color) y evitar duplicados.
 - Sigue usando /spec y /spec-impl (fernando-skills) para specs no relacionados a juegos.
 
