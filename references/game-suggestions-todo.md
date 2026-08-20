@@ -5,7 +5,7 @@ Estados: `[ ]` pendiente · `[x]` implementado · `~~tachado~~` descartado.
 
 ## Pendientes
 
-- [ ] **DUELO** — VERSUS/magenta — Pong clásico contra la CPU, primero en llegar al marcador gana.
+- [ ] **DUELO** — VERSUS/magenta — Pong clásico contra la CPU, primero en llegar al marcador gana. Specs listos (`game-jam`), pendiente `/spec-impl`.
 - [ ] **CASCADA CROMÁTICA** — PUZZLE/magenta — Bloques de colores caen en columnas, se agrupan y explotan en cascada.
 - [ ] **INVERSIÓN** — PUZZLE/cyan — Gravedad direccional: rótala para deslizar y encajar piezas contra las paredes.
 - [ ] **ENCASTRE** — PUZZLE/green — Piezas caen sobre un tablero con casillas objetivo que hay que cubrir exacto.
@@ -49,6 +49,7 @@ _(ninguno)_
 - **Motor**: Baja — física de rebote simple (AABB + reflexión de ángulo según punto de impacto en la paleta), IA de la CPU es un seguimiento de la pelota con velocidad limitada y margen de error creciente en niveles más altos.
 - **Riesgos**: definir cómo escalar dificultad de la IA por nivel, qué pasa si el jugador pierde (status "gameover" vs seguir sumando score parcial), y si el score final a guardar es "puntos anotados totales" o algún combo con margen de victoria.
 - **Sugerido**: 2026-08-20
+- **Specs**: specs/game-jam/duelo/
 
 ### CASCADA CROMÁTICA
 
