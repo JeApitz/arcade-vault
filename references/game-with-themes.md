@@ -8,7 +8,7 @@ Skins obligatorios en todo juego: `clasico` (default), `neon`, `retro`.
 | Juego      | clasico | neon | retro | Archivo de paleta  | Técnica de sprites            | Contraste | Verificado |
 | ---------- | ------- | ---- | ----- | ------------------ | ----------------------------- | --------- | ---------- |
 | asteroides | ✅      | ✅   | ✅    | asteroids-skins.ts | n/a (vectorial)               | R1–R9     | 2026-08-24 |
-| tetris     | ⬜      | ⬜   | ⬜    | —                  | n/a (procedural) + chrome DOM | —         | —          |
+| tetris     | ✅      | ✅   | ✅    | tetris-skins.ts    | n/a (procedural) + chrome DOM | R1–R9     | 2026-08-24 |
 | arkanoid   | ✅      | ✅   | ✅    | arkanoid-skins.ts  | hoja teñida pre-horneada      | R1–R9     | 2026-08-24 |
 | snake      | ✅      | ✅   | ✅    | snake-skins.ts     | ctx.filter en la fruta        | R1–R9     | 2026-08-24 |
 
@@ -36,10 +36,10 @@ Leyenda: ✅ listo · 🟡 en curso · ⬜ pendiente · ❌ bloqueado (anotar en
 
 ## Pendientes y riesgos conocidos
 
-- Pendientes: tetris.
-- Los tres juegos implementados (asteroides, arkanoid, snake) pasan R1–R9 en sus tres skins sin
-  excepciones. `clasico` se ajustó mínimamente en cada uno (ver `### Por juego`) para cumplir R3/
-  R5/R7 sin perder su identidad visual.
+- Pendientes: ninguno — los 4 juegos del catálogo tienen sus 3 skins implementados.
+- Los cuatro juegos implementados (asteroides, arkanoid, snake, tetris) pasan R1–R9 en sus tres
+  skins sin excepciones. `clasico` se ajustó mínimamente en cada uno (ver `### Por juego`) para
+  cumplir R3/R5/R7 sin perder su identidad visual.
 
 ## Por juego
 
@@ -145,3 +145,43 @@ yellow/hotpink/gray`), `paddleTint`, `ballTint` — los tres `null` juntos en `c
 - Gotcha: `Object.entries(SPRITES.blocks)` / `Object.entries(EXPLOSION_FRAMES)` tipan las claves
   como `string`; se necesitó un cast a `ArkanoidBlockColor` en `getTintedSheet` para indexar
   `config.tint` sin ampliar el tipo del `Record`.
+
+### tetris
+
+- Archivo: `app/juegos/[id]/jugar/tetris-skins.ts`. `TetrisExtra`: `pieces` (tupla de 9, índice 0
+  `null` sin usar, 1..7 = I/O/T/S/Z/J/L, 8 = N/tuerca), `ghostAlpha` (alfa de la silueta de caída,
+  reemplaza el literal `0.2` que tenía `drawBlock`), `dom` (`TetrisDom`: `border`, `canvasBg`,
+  `label`, `value`, `controlsText`, `kbdBg`, `kbdBorder`, `kbdText` — mapea 1:1 a las 8 vars
+  `--tetris-*` de `app/globals.css` que hoy solo tenían fallback).
+- Técnica: procedural puro (`fillRect`/`strokeStyle`, sin sprites) para el tablero + panel DOM
+  React fuera del canvas (SCORE/LINES/LEVEL, NEXT, CONTROLS) estilado con custom properties CSS
+  inline en `.tetris-container`, una por campo de `dom`.
+- `TetrisEngine` gana un último parámetro `skin` en el constructor y un método público `setSkin()`
+  que reasigna `this.skin` y llama a `this.draw()`. Es redundante en la práctica (el loop de
+  render de tetris, igual que el de snake, nunca se detiene: en pausa/game over sigue llamando a
+  `draw()` cada frame en su rama temprana) pero se agregó por consistencia con el resto de motores
+  y como salvaguarda ante cambios futuros del loop.
+- `clasico`: paleta "Tokyo Night" casi original de `tetris-engine.ts` — fondo `#1a1a25`, rejilla
+  `#2a2a3a` (era `#22222e`; se aclara lo mínimo para que R7 distinga la rejilla del fondo), 7
+  piezas con 2 ajustes de matiz sobre el original (ver Gotcha), `dom` calcado de los fallbacks que
+  ya tenía `globals.css` (`--tetris-border: #2a2a3a`, `--tetris-value: #7aa2f7`, etc.).
+- `neon`: 8 colores de pieza vívidos con Δhue ≥30° entre sí (`I #5df5ff`, `O #f5ff5d`,
+  `T #ff2fe0`, `S #5dff9e`, `Z #ff2f5e`, `J #5d8aff`, `L #ff8a3a`, `N #8a5cff`), acento/glow
+  magenta `#ff2fe0` (blur 10), fondo violeta casi-negro `#0a0414`, `dom` con bordes/kbd en
+  `rgba(255,47,224,·)` sobre fondo casi-negro.
+- `retro`: paleta fósforo CRT ámbar/verde (`I #5dffc8`, `O #ffe066`, `T #ff5a9e`, `S #3ecf3e`,
+  `Z #ff5a3a`, `J #5de0ff`, `L #c8ff5d`, `N #ffb000`), acento verde `#4dff4d`, sin glow, fondo
+  `#0d1400`.
+- Contraste medido con el script de verificación (mismas fórmulas que `assertSkinContrast`,
+  extras = las 8 piezas no nulas): los tres skins pasan R1–R9 sin excepciones (`clasico` fg/bg
+  13.90, grid/bg 1.22; `neon` fg/bg 17.96, grid/bg 1.30; `retro` fg/bg 15.17, grid/bg 1.38).
+- Gotcha: el `clasico` original tenía 3 pares de piezas casi indistinguibles entre sí (R3): I
+  `#4dd0e1` vs J `#90caf9` (cyan vs azul pálido, Δhue 20°), O `#ffd54f` vs L `#ffb74d` (amarillo vs
+  naranja, Δhue 10°), y Z `#e57373` vs N `#9e9e9e` (rojo vs gris, sin diferencia de matiz posible
+  con un gris desaturado). Se oscureció/saturó J a `#5c7cfa` y L a `#ff9800`, y se vistió N con un
+  tono bronce `#a1835c` — la pieza N no es alcanzable en juego hoy (su forma está comentada en
+  `PIECES`, `tetris-engine.ts:65-69`; solo se generan tipos 1..7), así que este ajuste es
+  puramente defensivo por si se reactiva en el futuro.
+- Gotcha: `.tetris-value` en `globals.css` tenía el color `#7aa2f7` hardcodeado sin `var()`; se
+  convirtió a `var(--tetris-value, #7aa2f7)` para que el campo `dom.value` del skin pueda
+  sobreescribirlo (mismo patrón que las otras 7 vars `--tetris-*`, que ya usaban fallback).

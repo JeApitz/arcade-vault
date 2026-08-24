@@ -1263,7 +1263,7 @@ a {
   font-family: "Courier New", Courier, monospace;
   font-size: 26px;
   font-weight: 700;
-  color: #7aa2f7;
+  color: var(--tetris-value, #7aa2f7);
   letter-spacing: 1px;
 }
 .tetris-controls ul {

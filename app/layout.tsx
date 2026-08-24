@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Press_Start_2P, JetBrains_Mono } from "next/font/google";
 import Nav from "./components/nav";
 import "./globals.css";
@@ -19,6 +19,13 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Arcade Vault",
   description: "Juega en línea y compite por el puntaje más alto.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

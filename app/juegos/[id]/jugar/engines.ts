@@ -18,6 +18,7 @@ export interface GameStats {
 
 export interface GameCanvasHandle {
   forceGameOver: () => void;
+  setKey?: (key: string, pressed: boolean) => void;
 }
 
 export interface GameCanvasProps {
@@ -27,12 +28,23 @@ export interface GameCanvasProps {
   skinId: SkinId;
 }
 
+export interface TouchButton {
+  key: string; // debe matchear el `code` que el motor ya usa en su handleKeyDown/keyup
+  label: string;
+  area: "dpad" | "action";
+  repeat?: boolean; // true = auto-repeat mientras se mantiene presionado (solo Tetris mover/bajar)
+}
+
+export type TouchControlsConfig =
+  { mode: "buttons"; buttons: TouchButton[] } | { mode: "drag"; hint: string };
+
 interface GameEngineEntry {
   Canvas: ForwardRefExoticComponent<GameCanvasProps & RefAttributes<GameCanvasHandle>>;
   hudLabel: string; // "VIDAS" | "LÍNEAS" | ...
   initialStats: GameStats;
   crtAspect: string; // relación de aspecto del marco CRT, según la forma del campo de juego
   hidePauseOverlay?: boolean; // true si el propio motor dibuja su overlay de pausa en el canvas
+  touchControls: TouchControlsConfig;
 }
 
 export const ENGINES: Record<string, GameEngineEntry> = {
@@ -41,12 +53,31 @@ export const ENGINES: Record<string, GameEngineEntry> = {
     hudLabel: "VIDAS",
     initialStats: { score: 0, secondary: 3, level: 1, status: "playing" },
     crtAspect: "4 / 3",
+    touchControls: {
+      mode: "buttons",
+      buttons: [
+        { key: "ArrowLeft", label: "◀", area: "dpad" },
+        { key: "ArrowRight", label: "▶", area: "dpad" },
+        { key: "ArrowUp", label: "▲ IMPULSO", area: "action" },
+        { key: "Space", label: "● DISPARO", area: "action" },
+      ],
+    },
   },
   tetris: {
     Canvas: TetrisCanvas,
     hudLabel: "LÍNEAS",
     initialStats: { score: 0, secondary: 0, level: 1, status: "playing" },
     crtAspect: "4 / 5",
+    touchControls: {
+      mode: "buttons",
+      buttons: [
+        { key: "ArrowLeft", label: "◀", area: "dpad", repeat: true },
+        { key: "ArrowRight", label: "▶", area: "dpad", repeat: true },
+        { key: "ArrowDown", label: "▼ BAJAR", area: "dpad", repeat: true },
+        { key: "ArrowUp", label: "⟳ ROTAR", area: "action" },
+        { key: "Space", label: "⤓ CAER", area: "action" },
+      ],
+    },
   },
   arkanoid: {
     Canvas: ArkanoidCanvas,
@@ -54,11 +85,21 @@ export const ENGINES: Record<string, GameEngineEntry> = {
     initialStats: { score: 0, secondary: 3, level: 1, status: "playing" },
     crtAspect: "4 / 3",
     hidePauseOverlay: true,
+    touchControls: { mode: "drag", hint: "ARRASTRA PARA MOVER · TOCA PARA LANZAR" },
   },
   snake: {
     Canvas: SnakeCanvas,
     hudLabel: "LONGITUD",
     initialStats: { score: 0, secondary: 1, level: 1, status: "playing" },
     crtAspect: "1 / 1",
+    touchControls: {
+      mode: "buttons",
+      buttons: [
+        { key: "ArrowUp", label: "▲", area: "dpad" },
+        { key: "ArrowDown", label: "▼", area: "dpad" },
+        { key: "ArrowLeft", label: "◀", area: "dpad" },
+        { key: "ArrowRight", label: "▶", area: "dpad" },
+      ],
+    },
   },
 };
