@@ -119,6 +119,8 @@ export class ArkanoidEngine {
     this.handleKeyUp = this.handleKeyUp.bind(this);
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.handleTouchMove = this.handleTouchMove.bind(this);
+    this.handleTouchStart = this.handleTouchStart.bind(this);
     this.loop = this.loop.bind(this);
   }
 
@@ -127,6 +129,8 @@ export class ArkanoidEngine {
     window.addEventListener("keyup", this.handleKeyUp);
     this.canvas.addEventListener("mousemove", this.handleMouseMove);
     this.canvas.addEventListener("click", this.handleClick);
+    this.canvas.addEventListener("touchmove", this.handleTouchMove, { passive: false });
+    this.canvas.addEventListener("touchstart", this.handleTouchStart, { passive: false });
 
     loadSpritesheet(() => {
       if (this.destroyed) return;
@@ -147,6 +151,8 @@ export class ArkanoidEngine {
     window.removeEventListener("keyup", this.handleKeyUp);
     this.canvas.removeEventListener("mousemove", this.handleMouseMove);
     this.canvas.removeEventListener("click", this.handleClick);
+    this.canvas.removeEventListener("touchmove", this.handleTouchMove);
+    this.canvas.removeEventListener("touchstart", this.handleTouchStart);
   }
 
   setPaused(paused: boolean) {
@@ -251,6 +257,42 @@ export class ArkanoidEngine {
     const scaleY = this.canvas.height / rect.height;
     const mx = (e.clientX - rect.left) * scaleX;
     const my = (e.clientY - rect.top) * scaleY;
+    for (let i = 0; i < 5; i++) {
+      const bx = PAUSE_BTN_ROW_X + i * (PAUSE_BTN_W + PAUSE_BTN_GAP);
+      if (
+        mx >= bx &&
+        mx <= bx + PAUSE_BTN_W &&
+        my >= PAUSE_BTN_Y &&
+        my <= PAUSE_BTN_Y + PAUSE_BTN_H
+      ) {
+        this.loadLevel(i + 1);
+        this.reportStats();
+        this.applyPause(false);
+        return;
+      }
+    }
+  }
+
+  private handleTouchMove(e: TouchEvent) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (!touch) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const touchX = (touch.clientX - rect.left) * scaleX;
+    this.paddle.x = Math.max(0, Math.min(CANVAS_W - this.paddle.w, touchX - this.paddle.w / 2));
+  }
+
+  private handleTouchStart(e: TouchEvent) {
+    e.preventDefault();
+    if (!this.isPaused) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
+    const mx = (touch.clientX - rect.left) * scaleX;
+    const my = (touch.clientY - rect.top) * scaleY;
     for (let i = 0; i < 5; i++) {
       const bx = PAUSE_BTN_ROW_X + i * (PAUSE_BTN_W + PAUSE_BTN_GAP);
       if (

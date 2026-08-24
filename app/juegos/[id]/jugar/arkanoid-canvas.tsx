@@ -58,7 +58,14 @@ const ArkanoidCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Ar
       ref={canvasRef}
       width={800}
       height={600}
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        display: "block",
+        touchAction: "none",
+      }}
     />
   );
 });
