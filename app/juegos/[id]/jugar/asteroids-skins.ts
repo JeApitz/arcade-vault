@@ -17,7 +17,7 @@ export type AsteroidsSkin = GameSkin<AsteroidsExtra>;
 export const ASTEROIDS_SKINS: SkinSet<AsteroidsExtra> = {
   clasico: {
     id: "clasico",
-    bg: "#000000",
+    bg: "#08080c",
     fg: "#ffffff",
     fgDim: "rgba(255,255,255,0.65)",
     accent: "#ffffff",
@@ -27,10 +27,10 @@ export const ASTEROIDS_SKINS: SkinSet<AsteroidsExtra> = {
     glow: null,
     glowBlur: 0,
     ship: "#ffffff",
-    bullet: "#ffffff",
-    asteroid: "#ffffff",
+    bullet: "#dedede",
+    asteroid: "#c1c1c1",
     thrust: "rgba(255, 130, 0, 0.85)",
-    particle: "#ffffff",
+    particle: "#a7a7a7",
     powerUp: "#00ffff",
   },
   neon: {

@@ -2,6 +2,7 @@
 // Todo el estado vive en propiedades de instancia de SnakeEngine (sin globales de módulo).
 
 import { drawFruit, loadFruitSheet, pickRandomFruit } from "./snake-sprites";
+import type { SnakeSkin } from "./snake-skins";
 
 export interface SnakeStats {
   score: number;
@@ -55,13 +56,15 @@ export class SnakeEngine {
   private accumMs = 0;
   private lastReported: SnakeStats | null = null;
   private spriteReady = false;
+  private skin: SnakeSkin;
 
-  constructor(canvas: HTMLCanvasElement, onStats: (stats: SnakeStats) => void) {
+  constructor(canvas: HTMLCanvasElement, onStats: (stats: SnakeStats) => void, skin: SnakeSkin) {
     this.canvas = canvas;
     const ctx = canvas.getContext("2d");
     if (!ctx) throw new Error("No se pudo obtener el contexto 2D del canvas.");
     this.ctx = ctx;
     this.onStats = onStats;
+    this.skin = skin;
 
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.loop = this.loop.bind(this);
@@ -86,6 +89,11 @@ export class SnakeEngine {
 
   setPaused(paused: boolean) {
     this.paused = paused;
+  }
+
+  setSkin(skin: SnakeSkin) {
+    this.skin = skin;
+    this.draw(); // fuerza el repintado: en pausa/game over el rAF puede tardar en refrescar
   }
 
   forceGameOver() {
@@ -215,11 +223,12 @@ export class SnakeEngine {
 
   private draw() {
     const ctx = this.ctx;
-    ctx.fillStyle = "#05070a";
+    const skin = this.skin;
+    ctx.fillStyle = skin.bg;
     ctx.fillRect(0, 0, W, H);
 
     ctx.save();
-    ctx.strokeStyle = "rgba(0, 255, 136, 0.08)";
+    ctx.strokeStyle = skin.grid;
     ctx.lineWidth = 1;
     for (let i = 1; i < GRID; i++) {
       ctx.beginPath();
@@ -234,6 +243,8 @@ export class SnakeEngine {
     ctx.restore();
 
     if (this.spriteReady) {
+      ctx.save();
+      ctx.filter = skin.fruitFilter ?? "none";
       drawFruit(
         ctx,
         this.fruit.spriteKey,
@@ -241,16 +252,19 @@ export class SnakeEngine {
         this.fruit.y * CELL + 2,
         CELL - 4
       );
+      ctx.restore();
     } else {
-      ctx.fillStyle = "#ff3b5c";
+      ctx.fillStyle = skin.danger;
       ctx.fillRect(this.fruit.x * CELL + 4, this.fruit.y * CELL + 4, CELL - 8, CELL - 8);
     }
 
     this.snake.forEach((seg, i) => {
       ctx.save();
-      ctx.fillStyle = i === 0 ? "#00ff88" : "rgba(0, 255, 136, 0.75)";
-      ctx.shadowColor = "#00ff88";
-      ctx.shadowBlur = i === 0 ? 8 : 3;
+      ctx.fillStyle = i === 0 ? skin.head : skin.body;
+      if (skin.glow) {
+        ctx.shadowColor = skin.glow;
+        ctx.shadowBlur = i === 0 ? skin.glowBlur : Math.round(skin.glowBlur * 0.375);
+      }
       const pad = 2;
       const r = 6;
       const x = seg.x * CELL + pad;
@@ -273,7 +287,7 @@ export class SnakeEngine {
     const ctx = this.ctx;
     ctx.save();
     ctx.font = "bold 16px monospace";
-    ctx.fillStyle = "#00ff88";
+    ctx.fillStyle = this.skin.fg;
     ctx.textBaseline = "middle";
 
     ctx.textAlign = "left";
@@ -286,13 +300,16 @@ export class SnakeEngine {
 
   private drawOverlay(title: string, sub: string) {
     const ctx = this.ctx;
+    const skin = this.skin;
     ctx.save();
+    ctx.fillStyle = skin.overlay;
+    ctx.fillRect(0, 0, W, H);
     ctx.textAlign = "center";
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = skin.fg;
     ctx.font = "bold 40px monospace";
     ctx.fillText(title, W / 2, H / 2 - 18);
     ctx.font = "16px monospace";
-    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.fillStyle = skin.fgDim;
     ctx.fillText(sub, W / 2, H / 2 + 18);
     ctx.restore();
   }

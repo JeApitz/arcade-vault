@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { ArkanoidEngine, type ArkanoidStats } from "./arkanoid-engine";
+import { ARKANOID_SKINS } from "./arkanoid-skins";
 import type { GameCanvasHandle, GameCanvasProps } from "./engines";
 
 export type ArkanoidCanvasHandle = GameCanvasHandle;
@@ -14,7 +15,7 @@ const toGameStats = (stats: ArkanoidStats) => ({
 });
 
 const ArkanoidCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function ArkanoidCanvas(
-  { onStats, paused, onPauseChange },
+  { onStats, paused, onPauseChange, skinId },
   ref
 ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -31,7 +32,8 @@ const ArkanoidCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Ar
     const engine = new ArkanoidEngine(
       canvas,
       (stats) => onStats(toGameStats(stats)),
-      (nextPaused) => onPauseChange?.(nextPaused)
+      (nextPaused) => onPauseChange?.(nextPaused),
+      ARKANOID_SKINS[skinId]
     );
     engineRef.current = engine;
     engine.start();
@@ -46,6 +48,10 @@ const ArkanoidCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Ar
   useEffect(() => {
     engineRef.current?.setPaused(paused);
   }, [paused]);
+
+  useEffect(() => {
+    engineRef.current?.setSkin(ARKANOID_SKINS[skinId]);
+  }, [skinId]);
 
   return (
     <canvas
