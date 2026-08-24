@@ -403,13 +403,17 @@ export class AsteroidsEngine {
     this.reportStats();
   }
 
+  setKey(code: string, pressed: boolean) {
+    if (pressed && !this.keys[code]) this.justPressed[code] = true;
+    this.keys[code] = pressed;
+  }
+
   private handleKeyDown(e: KeyboardEvent) {
-    if (!this.keys[e.code]) this.justPressed[e.code] = true;
-    this.keys[e.code] = true;
+    this.setKey(e.code, true);
   }
 
   private handleKeyUp(e: KeyboardEvent) {
-    this.keys[e.code] = false;
+    this.setKey(e.code, false);
   }
 
   private pressed(code: string): boolean {

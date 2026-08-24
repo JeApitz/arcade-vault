@@ -1,6 +1,8 @@
 // Motor del juego TETRIS, portado de references/started-games/03-tetris/game.js.
 // Todo el estado vive en propiedades de instancia de TetrisEngine (sin globales de módulo).
 
+import type { TetrisSkin } from "./tetris-skins";
+
 export interface TetrisStats {
   score: number;
   lines: number; // reemplaza a "vidas" en el HUD para este juego
@@ -11,19 +13,6 @@ export interface TetrisStats {
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
-const GRID_LINE = "#22222e";
-
-const COLORS = [
-  null,
-  "#4dd0e1", // I - cyan
-  "#ffd54f", // O - yellow
-  "#ba68c8", // T - purple
-  "#81c784", // S - green
-  "#e57373", // Z - red
-  "#90caf9", // J - pale blue
-  "#ffb74d", // L - orange
-  "#9e9e9e", // N - tuerca (gris metálico)
-];
 
 const PIECES: (number[][] | null)[] = [
   null,
@@ -101,12 +90,15 @@ export class TetrisEngine {
   private rafId: number | null = null;
   private lastTime: number | null = null;
   private lastReported: TetrisStats | null = null;
+  private skin: TetrisSkin;
 
   constructor(
     boardCanvas: HTMLCanvasElement,
     nextCanvas: HTMLCanvasElement,
-    onStats: (stats: TetrisStats) => void
+    onStats: (stats: TetrisStats) => void,
+    skin: TetrisSkin
   ) {
+    this.skin = skin;
     this.boardCanvas = boardCanvas;
     const boardCtx = boardCanvas.getContext("2d");
     if (!boardCtx) throw new Error("No se pudo obtener el contexto 2D del canvas del tablero.");
@@ -140,6 +132,11 @@ export class TetrisEngine {
 
   setPaused(paused: boolean) {
     this.paused = paused;
+  }
+
+  setSkin(skin: TetrisSkin) {
+    this.skin = skin;
+    this.draw(); // fuerza repintado: en pausa/game over el loop no cambia de estado por sí solo
   }
 
   forceGameOver() {
@@ -305,7 +302,7 @@ export class TetrisEngine {
     alpha?: number
   ) {
     if (!colorIndex) return;
-    const color = COLORS[colorIndex];
+    const color = this.skin.pieces[colorIndex];
     ctx.globalAlpha = alpha ?? 1;
     ctx.fillStyle = color!;
     ctx.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
@@ -316,7 +313,7 @@ export class TetrisEngine {
 
   private drawGrid() {
     const ctx = this.boardCtx;
-    ctx.strokeStyle = GRID_LINE;
+    ctx.strokeStyle = this.skin.grid;
     ctx.lineWidth = 0.5;
     for (let c = 1; c < COLS; c++) {
       ctx.beginPath();
@@ -344,7 +341,14 @@ export class TetrisEngine {
     for (let r = 0; r < this.current.shape.length; r++)
       for (let c = 0; c < this.current.shape[r].length; c++)
         if (this.current.shape[r][c])
-          this.drawBlock(ctx, this.current.x + c, gy + r, this.current.shape[r][c], BLOCK, 0.2);
+          this.drawBlock(
+            ctx,
+            this.current.x + c,
+            gy + r,
+            this.current.shape[r][c],
+            BLOCK,
+            this.skin.ghostAlpha
+          );
 
     for (let r = 0; r < this.current.shape.length; r++)
       for (let c = 0; c < this.current.shape[r].length; c++)
@@ -371,9 +375,10 @@ export class TetrisEngine {
         this.drawBlock(ctx, offX + c, offY + r, shape[r][c], NB);
   }
 
-  private handleKeyDown(e: KeyboardEvent) {
+  setKey(code: string, pressed: boolean) {
+    if (!pressed) return;
     if (this.paused || this.status === "gameover") return;
-    switch (e.code) {
+    switch (code) {
       case "ArrowLeft":
         if (!this.collide(this.current.shape, this.current.x - 1, this.current.y)) this.current.x--;
         break;
@@ -387,12 +392,16 @@ export class TetrisEngine {
         this.tryRotate();
         break;
       case "Space":
-        e.preventDefault();
         this.hardDrop();
         break;
       default:
         return;
     }
+  }
+
+  private handleKeyDown(e: KeyboardEvent) {
+    if (e.code === "Space") e.preventDefault();
+    this.setKey(e.code, true);
   }
 
   private loop(ts: number) {

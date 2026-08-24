@@ -23,6 +23,7 @@ const SnakeCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Snake
 
   useImperativeHandle(ref, () => ({
     forceGameOver: () => engineRef.current?.forceGameOver(),
+    setKey: (key, pressed) => engineRef.current?.setKey(key, pressed),
   }));
 
   useEffect(() => {

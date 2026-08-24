@@ -1,8 +1,16 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { TetrisEngine, type TetrisStats } from "./tetris-engine";
 import type { GameCanvasHandle, GameCanvasProps } from "./engines";
+import { TETRIS_SKINS } from "./tetris-skins";
 
 export type TetrisCanvasHandle = GameCanvasHandle;
 
@@ -20,7 +28,7 @@ const STAGE_W = 480;
 const STAGE_H = 600;
 
 const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function TetrisCanvas(
-  { onStats, paused },
+  { onStats, paused, skinId },
   ref
 ) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -29,9 +37,11 @@ const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Tetr
   const engineRef = useRef<TetrisEngine | null>(null);
   const [stats, setStats] = useState<TetrisStats>(INITIAL_STATS);
   const [scale, setScale] = useState(1);
+  const skin = TETRIS_SKINS[skinId];
 
   useImperativeHandle(ref, () => ({
     forceGameOver: () => engineRef.current?.forceGameOver(),
+    setKey: (key, pressed) => engineRef.current?.setKey(key, pressed),
   }));
 
   useEffect(() => {
@@ -39,10 +49,15 @@ const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Tetr
     const nextCanvas = nextCanvasRef.current;
     if (!boardCanvas || !nextCanvas) return;
 
-    const engine = new TetrisEngine(boardCanvas, nextCanvas, (nextStats) => {
-      setStats(nextStats);
-      onStats(toGameStats(nextStats));
-    });
+    const engine = new TetrisEngine(
+      boardCanvas,
+      nextCanvas,
+      (nextStats) => {
+        setStats(nextStats);
+        onStats(toGameStats(nextStats));
+      },
+      TETRIS_SKINS[skinId]
+    );
     engineRef.current = engine;
     engine.start();
 
@@ -56,6 +71,10 @@ const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Tetr
   useEffect(() => {
     engineRef.current?.setPaused(paused);
   }, [paused]);
+
+  useEffect(() => {
+    engineRef.current?.setSkin(TETRIS_SKINS[skinId]);
+  }, [skinId]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -75,7 +94,21 @@ const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Tetr
         className="tetris-stage"
         style={{ transform: `scale(${scale})`, width: STAGE_W, height: STAGE_H }}
       >
-        <div className="tetris-container">
+        <div
+          className="tetris-container"
+          style={
+            {
+              "--tetris-border": skin.dom.border,
+              "--tetris-canvas-bg": skin.dom.canvasBg,
+              "--tetris-label": skin.dom.label,
+              "--tetris-value": skin.dom.value,
+              "--tetris-controls-text": skin.dom.controlsText,
+              "--tetris-kbd-bg": skin.dom.kbdBg,
+              "--tetris-kbd-border": skin.dom.kbdBorder,
+              "--tetris-kbd-text": skin.dom.kbdText,
+            } as CSSProperties
+          }
+        >
           <canvas ref={boardCanvasRef} width={300} height={600} />
 
           <aside className="tetris-panel">
