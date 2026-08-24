@@ -6,6 +6,7 @@ import type { Game } from "../../../data/games";
 import { createClient } from "../../../lib/supabase/client";
 import { ENGINES, type GameCanvasHandle, type GameStats } from "./engines";
 import { DEFAULT_SKIN, SKIN_IDS, SKIN_LABELS, readSkinId, writeSkinId, type SkinId } from "./skins";
+import TouchControls from "./touch-controls";
 
 export default function GamePlayer({ game }: { game: Game }) {
   const router = useRouter();
@@ -157,7 +158,7 @@ export default function GamePlayer({ game }: { game: Game }) {
           <span>{game.title} · CRT-83 · 60 HZ</span>
           <span>CARGA · 1MB</span>
         </div>
-        <div className="mono kbd-notice">▸ ESTE JUEGO REQUIERE TECLADO_</div>
+        {engine && <TouchControls touchControls={engine.touchControls} handle={canvasRef} />}
       </div>
 
       {showModal && (

@@ -1195,18 +1195,66 @@ a {
   background: var(--green);
   box-shadow: 0 0 6px var(--green);
 }
-.kbd-notice {
+.touch-controls {
   display: none;
-  margin-top: 10px;
+  margin-top: 14px;
   padding: 0 8px;
-  font-size: 11px;
-  color: var(--ink-dim);
-  letter-spacing: 0.06em;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 @media (hover: none) and (pointer: coarse) {
-  .kbd-notice {
+  .touch-controls {
     display: flex;
   }
+}
+.touch-controls .dpad,
+.touch-controls .actions {
+  display: flex;
+  gap: 10px;
+}
+.touch-controls .touch-hint {
+  margin: 0 auto;
+  font-family: var(--pixel);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: var(--ink-dim);
+  text-align: center;
+}
+.touch-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 52px;
+  padding: 8px 12px;
+  font-family: var(--pixel);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--cyan);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+.touch-btn:active {
+  color: var(--cyan);
+  box-shadow:
+    0 0 14px rgba(0, 245, 255, 0.55),
+    inset 0 0 8px rgba(0, 245, 255, 0.35);
+}
+.touch-btn.touch-btn-action {
+  border-color: var(--magenta);
+}
+.touch-btn.touch-btn-action:active {
+  color: var(--magenta);
+  box-shadow:
+    0 0 14px rgba(255, 0, 110, 0.55),
+    inset 0 0 8px rgba(255, 0, 110, 0.35);
 }
 
 /* ===== tetris HUD (fiel a la referencia, paleta Tokyo Night) ===== */
