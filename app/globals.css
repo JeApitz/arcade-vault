@@ -409,6 +409,11 @@ a {
   border-color: var(--ink-dim);
   box-shadow: none;
 }
+.btn.ghost.active {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 8px rgba(0, 245, 255, 0.35);
+}
 .btn.lg {
   padding: 16px 28px;
   font-size: 12px;
@@ -1087,6 +1092,23 @@ a {
 .hud-stat.level .v {
   color: var(--yellow);
   text-shadow: 0 0 6px rgba(245, 255, 0, 0.5);
+}
+.hud-skins {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hud-skins .l {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-right: 2px;
+}
+.hud-skins .btn {
+  padding: 8px 12px;
+  font-size: 9px;
 }
 .hud-actions {
   display: flex;
@@ -1784,6 +1806,13 @@ a {
   }
   .hud-stat .v {
     font-size: 13px;
+  }
+  .hud-skins {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .hud-skins .btn {
+    flex: 1;
   }
   .hud-actions {
     width: 100%;

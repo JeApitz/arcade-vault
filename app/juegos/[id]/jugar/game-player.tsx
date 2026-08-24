@@ -1,16 +1,26 @@
 "use client";
 
-import { useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "../../../data/games";
 import { createClient } from "../../../lib/supabase/client";
 import { ENGINES, type GameCanvasHandle, type GameStats } from "./engines";
+import { DEFAULT_SKIN, SKIN_IDS, SKIN_LABELS, readSkinId, writeSkinId, type SkinId } from "./skins";
 
 export default function GamePlayer({ game }: { game: Game }) {
   const router = useRouter();
   const engine = ENGINES[game.id];
 
   const [paused, setPaused] = useState(false);
+  const [skinId, setSkinId] = useState<SkinId | null>(null); // null = pre-hidratación
+  useEffect(() => {
+    setSkinId(readSkinId(game.id));
+  }, [game.id]);
+
+  const selectSkin = (id: SkinId) => {
+    setSkinId(id);
+    writeSkinId(game.id, id);
+  };
   const [name, setName] = useState("INVITADO");
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -77,6 +87,22 @@ export default function GamePlayer({ game }: { game: Game }) {
             <div className="v">{String(level).padStart(2, "0")}</div>
           </div>
         </div>
+        <div className="hud-skins" role="group" aria-label="Skin">
+          <div className="l">Skin</div>
+          {SKIN_IDS.map((id) => (
+            <button
+              key={id}
+              className={`btn ghost${(skinId ?? DEFAULT_SKIN) === id ? " active" : ""}`}
+              aria-pressed={(skinId ?? DEFAULT_SKIN) === id}
+              onClick={(e) => {
+                selectSkin(id);
+                e.currentTarget.blur();
+              }}
+            >
+              {SKIN_LABELS[id]}
+            </button>
+          ))}
+        </div>
         <div className="hud-actions">
           <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
             {paused ? "REANUDAR" : "PAUSA"}
@@ -95,13 +121,14 @@ export default function GamePlayer({ game }: { game: Game }) {
           className="crt-screen"
           style={{ "--crt-aspect": engine?.crtAspect ?? "4 / 3" } as CSSProperties}
         >
-          {engine && (
+          {engine && skinId !== null && (
             <engine.Canvas
               key={resetKey}
               ref={canvasRef}
               onStats={setStats}
               paused={paused}
               onPauseChange={setPaused}
+              skinId={skinId}
             />
           )}
           {paused && !engine?.hidePauseOverlay && (
