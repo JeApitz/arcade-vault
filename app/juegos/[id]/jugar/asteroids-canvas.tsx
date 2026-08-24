@@ -23,6 +23,7 @@ const AsteroidsCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function A
 
   useImperativeHandle(ref, () => ({
     forceGameOver: () => engineRef.current?.forceGameOver(),
+    setKey: (key, pressed) => engineRef.current?.setKey(key, pressed),
   }));
 
   useEffect(() => {

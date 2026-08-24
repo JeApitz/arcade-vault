@@ -375,9 +375,10 @@ export class TetrisEngine {
         this.drawBlock(ctx, offX + c, offY + r, shape[r][c], NB);
   }
 
-  private handleKeyDown(e: KeyboardEvent) {
+  setKey(code: string, pressed: boolean) {
+    if (!pressed) return;
     if (this.paused || this.status === "gameover") return;
-    switch (e.code) {
+    switch (code) {
       case "ArrowLeft":
         if (!this.collide(this.current.shape, this.current.x - 1, this.current.y)) this.current.x--;
         break;
@@ -391,12 +392,16 @@ export class TetrisEngine {
         this.tryRotate();
         break;
       case "Space":
-        e.preventDefault();
         this.hardDrop();
         break;
       default:
         return;
     }
+  }
+
+  private handleKeyDown(e: KeyboardEvent) {
+    if (e.code === "Space") e.preventDefault();
+    this.setKey(e.code, true);
   }
 
   private loop(ts: number) {

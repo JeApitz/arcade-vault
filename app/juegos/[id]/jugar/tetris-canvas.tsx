@@ -41,6 +41,7 @@ const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Tetr
 
   useImperativeHandle(ref, () => ({
     forceGameOver: () => engineRef.current?.forceGameOver(),
+    setKey: (key, pressed) => engineRef.current?.setKey(key, pressed),
   }));
 
   useEffect(() => {

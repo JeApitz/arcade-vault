@@ -102,9 +102,10 @@ export class SnakeEngine {
     this.reportStats();
   }
 
-  private handleKeyDown(e: KeyboardEvent) {
+  setKey(code: string, pressed: boolean) {
+    if (!pressed) return;
     let next: Cell | null = null;
-    switch (e.code) {
+    switch (code) {
       case "ArrowUp":
       case "KeyW":
         next = { x: 0, y: -1 };
@@ -126,6 +127,10 @@ export class SnakeEngine {
     }
     if (isOpposite(next, this.direction)) return;
     this.pendingDirection = next;
+  }
+
+  private handleKeyDown(e: KeyboardEvent) {
+    this.setKey(e.code, true);
   }
 
   private spawnFruit() {
