@@ -3,6 +3,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { SnakeEngine, type SnakeStats } from "./snake-engine";
 import type { GameCanvasHandle, GameCanvasProps } from "./engines";
+import { SNAKE_SKINS } from "./snake-skins";
 
 export type SnakeCanvasHandle = GameCanvasHandle;
 
@@ -14,7 +15,7 @@ const toGameStats = (stats: SnakeStats) => ({
 });
 
 const SnakeCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function SnakeCanvas(
-  { onStats, paused },
+  { onStats, paused, skinId },
   ref
 ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -28,7 +29,11 @@ const SnakeCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Snake
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new SnakeEngine(canvas, (stats) => onStats(toGameStats(stats)));
+    const engine = new SnakeEngine(
+      canvas,
+      (stats) => onStats(toGameStats(stats)),
+      SNAKE_SKINS[skinId]
+    );
     engineRef.current = engine;
     engine.start();
 
@@ -42,6 +47,10 @@ const SnakeCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Snake
   useEffect(() => {
     engineRef.current?.setPaused(paused);
   }, [paused]);
+
+  useEffect(() => {
+    engineRef.current?.setSkin(SNAKE_SKINS[skinId]);
+  }, [skinId]);
 
   return (
     <canvas

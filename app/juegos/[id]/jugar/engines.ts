@@ -7,6 +7,7 @@ import AsteroidsCanvas from "./asteroids-canvas";
 import TetrisCanvas from "./tetris-canvas";
 import ArkanoidCanvas from "./arkanoid-canvas";
 import SnakeCanvas from "./snake-canvas";
+import type { SkinId } from "./skins";
 
 export interface GameStats {
   score: number;
@@ -23,6 +24,7 @@ export interface GameCanvasProps {
   onStats: (stats: GameStats) => void;
   paused: boolean;
   onPauseChange?: (paused: boolean) => void;
+  skinId: SkinId;
 }
 
 interface GameEngineEntry {

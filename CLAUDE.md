@@ -14,6 +14,9 @@ There is no test runner configured yet.
 
 - Usa siempre /frontend-design para diseñar la interfaz de usuario.
 - Usa /spec-game para diseñar el spec de un juego nuevo antes de programarlo (motor, canvas, catálogo en Supabase, leaderboard). Pregunta antes de escribir.
+- Usa el agente `game-planner` (solo bajo petición explícita) para decidir qué juegos nuevos agregar; acepta un N (`game-planner 10`) y paraleliza en carriles temáticos, deduplicando contra `references/game-suggestions-todo.md`, que es su memoria. Su salida alimenta `/spec-game`.
+- Usa el agente `game-jam` (solo bajo petición explícita) para convertir un **tema** en un juego nuevo con tres specs escalonados en `specs/game-jam/<game-id>/` (núcleo jugable → contenido/progresión → identidad y pulido). No pregunta, no escribe código y deja los specs en `Borrador`; deduplica contra `references/implemented-games.md` y `references/game-suggestions-todo.md`, y registra el juego elegido en ese ToDo.
+- Usa el agente `skin-designer` (solo bajo petición explícita) para implementar los tres skins obligatorios de un juego (`clasico` default, `neon`, `retro`) con contraste verificado sobre el fondo oscuro fijo del sitio; trabaja un juego por corrida (`skin-designer <juego>`) y mantiene el estado en `references/game-with-themes.md`, su memoria.
 - Antes de implementar un juego nuevo, revisa `references/implemented-games.md` para saber qué juegos ya están implementados (ID, título, categoría, descripción breve, color) y evitar duplicados.
 - Sigue usando /spec y /spec-impl (fernando-skills) para specs no relacionados a juegos.
 

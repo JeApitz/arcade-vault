@@ -6,9 +6,11 @@ import {
   drawSprite,
   EXPLOSION_DURATION,
   EXPLOSION_FRAMES,
+  getTintedSheet,
   loadSpritesheet,
 } from "./arkanoid-sprites";
 import { LEVELS } from "./arkanoid-levels";
+import type { ArkanoidSkin } from "./arkanoid-skins";
 
 export interface ArkanoidStats {
   score: number;
@@ -93,11 +95,14 @@ export class ArkanoidEngine {
   private rafId: number | null = null;
   private lastTime: number | null = null;
   private lastReported: ArkanoidStats | null = null;
+  private skin: ArkanoidSkin;
+  private sheet: HTMLCanvasElement | null = null;
 
   constructor(
     canvas: HTMLCanvasElement,
     onStats: (stats: ArkanoidStats) => void,
-    onPauseChange: (paused: boolean) => void
+    onPauseChange: (paused: boolean) => void,
+    skin: ArkanoidSkin
   ) {
     this.canvas = canvas;
     const ctx = canvas.getContext("2d");
@@ -105,6 +110,7 @@ export class ArkanoidEngine {
     this.ctx = ctx;
     this.onStats = onStats;
     this.onPauseChangeCb = onPauseChange;
+    this.skin = skin;
 
     this.bounceSound = new Audio("/games/arkanoid/ball-bounce.mp3");
     this.breakSound = new Audio("/games/arkanoid/break-sound.mp3");
@@ -124,6 +130,7 @@ export class ArkanoidEngine {
 
     loadSpritesheet(() => {
       if (this.destroyed) return;
+      this.refreshSheet();
       this.initPaddle();
       this.loadLevel(1);
       this.reportStats();
@@ -145,6 +152,22 @@ export class ArkanoidEngine {
   setPaused(paused: boolean) {
     if (this.isPaused === paused) return;
     this.applyPause(paused);
+  }
+
+  setSkin(skin: ArkanoidSkin) {
+    this.skin = skin;
+    this.refreshSheet();
+    // El rAF puede estar detenido lógicamente (pausa/game over lo siguen dibujando,
+    // pero forzamos un draw() inmediato para no esperar al próximo frame natural).
+    this.draw();
+  }
+
+  private refreshSheet() {
+    const { tint, paddleTint, ballTint } = this.skin;
+    this.sheet = getTintedSheet(
+      this.skin.id,
+      tint && paddleTint && ballTint ? { tint, paddleTint, ballTint } : null
+    );
   }
 
   forceGameOver() {
@@ -346,9 +369,9 @@ export class ArkanoidEngine {
 
   private drawOverlay(message: string) {
     const ctx = this.ctx;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.fillStyle = this.skin.overlay;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = this.skin.fg;
     ctx.font = "bold 64px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -389,23 +412,25 @@ export class ArkanoidEngine {
 
   private draw() {
     const ctx = this.ctx;
-    ctx.fillStyle = "#000";
+    const sheet = this.sheet;
+    ctx.fillStyle = this.skin.bg;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     for (const block of this.blocks) {
-      if (block.alive) drawSprite(ctx, "block_" + block.color, block.x, block.y, block.w, block.h);
+      if (block.alive)
+        drawSprite(ctx, "block_" + block.color, block.x, block.y, block.w, block.h, sheet);
     }
 
     for (const exp of this.explosions) {
       const frameIndex = Math.min(Math.floor((exp.elapsed / EXPLOSION_DURATION) * 4), 3);
-      drawFrame(ctx, EXPLOSION_FRAMES[exp.color][frameIndex], exp.x, exp.y, exp.w, exp.h);
+      drawFrame(ctx, EXPLOSION_FRAMES[exp.color][frameIndex], exp.x, exp.y, exp.w, exp.h, sheet);
     }
 
-    drawSprite(ctx, "paddle", this.paddle.x, this.paddle.y, this.paddle.w, this.paddle.h);
-    drawSprite(ctx, "ball", this.ball.x, this.ball.y, this.ball.w, this.ball.h);
+    drawSprite(ctx, "paddle", this.paddle.x, this.paddle.y, this.paddle.w, this.paddle.h, sheet);
+    drawSprite(ctx, "ball", this.ball.x, this.ball.y, this.ball.w, this.ball.h, sheet);
 
     if (this.gameState === "playing") {
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = this.skin.fg;
       ctx.font = "bold 18px monospace";
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
@@ -416,7 +441,7 @@ export class ArkanoidEngine {
       const ballSpacing = 4;
       for (let i = 0; i < this.lives; i++) {
         const bx = CANVAS_W - 10 - (this.lives - i) * (ballSize + ballSpacing);
-        drawSprite(ctx, "ball", bx, 10, ballSize, ballSize);
+        drawSprite(ctx, "ball", bx, 10, ballSize, ballSize, sheet);
       }
     }
 

@@ -1,6 +1,9 @@
 // Puerto de references/started-games/04-arkanoid/assets/spritesheet.js.
 // Carga la imagen desde /games/arkanoid/spritesheet-breakout.png en vez de una ruta relativa.
 
+import type { SkinId } from "./skins";
+import type { ArkanoidBlockColor } from "./arkanoid-skins";
+
 export interface SpriteFrame {
   sx: number;
   sy: number;
@@ -106,10 +109,11 @@ export function drawFrame(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
+  sheet: CanvasImageSource | null = ssImg
 ): void {
-  if (!ssLoaded || !ssImg) return;
-  ctx.drawImage(ssImg, frame.sx, frame.sy, frame.sw, frame.sh, x, y, w, h);
+  if (!ssLoaded || !sheet) return;
+  ctx.drawImage(sheet, frame.sx, frame.sy, frame.sw, frame.sh, x, y, w, h);
 }
 
 export function drawSprite(
@@ -118,9 +122,10 @@ export function drawSprite(
   x: number,
   y: number,
   w: number,
-  h: number
+  h: number,
+  sheet: CanvasImageSource | null = ssImg
 ): void {
-  if (!ssLoaded || !ssImg) return;
+  if (!ssLoaded || !sheet) return;
   let sp: SpriteFrame | undefined;
   if (name.startsWith("block_")) {
     sp = SPRITES.blocks[name.slice(6)];
@@ -130,5 +135,97 @@ export function drawSprite(
     sp = SPRITES.ball;
   }
   if (!sp) return;
-  ctx.drawImage(ssImg, sp.sx, sp.sy, sp.sw, sp.sh, x, y, w, h);
+  ctx.drawImage(sheet, sp.sx, sp.sy, sp.sw, sp.sh, x, y, w, h);
+}
+
+// --- Teñido pre-horneado por skin (Fase 4.4: pixel-art de rampa/monocromo) ---
+// `clasico` (tint === null) usa la hoja original sin teñir. `neon`/`retro` bakean
+// UNA vez por skin (no por frame) una copia de la hoja con cada rect recoloreado,
+// preservando el biselado: copiar → "color" (reemplaza matiz/saturación, conserva
+// luminancia) → "destination-in" (restaura la máscara alfa) → volcar a la hoja teñida.
+
+let scratch: HTMLCanvasElement | null = null;
+let scratchCtx: CanvasRenderingContext2D | null = null;
+let blendMode: GlobalCompositeOperation | null = null;
+
+function ensureScratch(): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
+  if (!scratch) {
+    scratch = document.createElement("canvas");
+    scratchCtx = scratch.getContext("2d");
+  }
+  return { canvas: scratch, ctx: scratchCtx! };
+}
+
+/** Feature-detect de `globalCompositeOperation = "color"`; degrada a "source-atop" si falta. */
+function pickBlendMode(ctx: CanvasRenderingContext2D): GlobalCompositeOperation {
+  if (blendMode) return blendMode;
+  ctx.globalCompositeOperation = "color";
+  blendMode = ctx.globalCompositeOperation === "color" ? "color" : "source-atop";
+  ctx.globalCompositeOperation = "source-over";
+  return blendMode;
+}
+
+function tintFrame(
+  destCtx: CanvasRenderingContext2D,
+  source: HTMLCanvasElement,
+  frame: SpriteFrame,
+  color: string
+): void {
+  const { canvas, ctx } = ensureScratch();
+  canvas.width = frame.sw;
+  canvas.height = frame.sh;
+  ctx.clearRect(0, 0, frame.sw, frame.sh);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.drawImage(source, frame.sx, frame.sy, frame.sw, frame.sh, 0, 0, frame.sw, frame.sh);
+  ctx.globalCompositeOperation = pickBlendMode(ctx);
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, frame.sw, frame.sh);
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.drawImage(source, frame.sx, frame.sy, frame.sw, frame.sh, 0, 0, frame.sw, frame.sh);
+  ctx.globalCompositeOperation = "source-over";
+  destCtx.clearRect(frame.sx, frame.sy, frame.sw, frame.sh);
+  destCtx.drawImage(canvas, 0, 0, frame.sw, frame.sh, frame.sx, frame.sy, frame.sw, frame.sh);
+}
+
+export interface ArkanoidTintConfig {
+  tint: Record<ArkanoidBlockColor, string>;
+  paddleTint: string;
+  ballTint: string;
+}
+
+const tintedSheets = new Map<SkinId, HTMLCanvasElement>();
+
+/**
+ * Devuelve la hoja de sprites a usar para `skinId`: la original sin teñir si
+ * `config` es `null` (skin `clasico`), o una copia teñida horneada una sola vez
+ * y cacheada por skin. Devuelve `null` si la hoja original aún no cargó.
+ */
+export function getTintedSheet(
+  skinId: SkinId,
+  config: ArkanoidTintConfig | null
+): HTMLCanvasElement | null {
+  if (!ssLoaded || !ssImg) return null;
+  if (config === null) return ssImg;
+
+  const cached = tintedSheets.get(skinId);
+  if (cached) return cached;
+
+  const dest = document.createElement("canvas");
+  dest.width = ssImg.width;
+  dest.height = ssImg.height;
+  const destCtx = dest.getContext("2d")!;
+  destCtx.drawImage(ssImg, 0, 0);
+
+  tintFrame(destCtx, ssImg, SPRITES.paddle, config.paddleTint);
+  tintFrame(destCtx, ssImg, SPRITES.ball, config.ballTint);
+  for (const [key, frame] of Object.entries(SPRITES.blocks)) {
+    tintFrame(destCtx, ssImg, frame, config.tint[key as ArkanoidBlockColor]);
+  }
+  for (const [key, frames] of Object.entries(EXPLOSION_FRAMES)) {
+    const color = config.tint[key as ArkanoidBlockColor];
+    for (const frame of frames) tintFrame(destCtx, ssImg, frame, color);
+  }
+
+  tintedSheets.set(skinId, dest);
+  return dest;
 }

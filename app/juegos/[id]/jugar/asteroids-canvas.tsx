@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { AsteroidsEngine, type AsteroidsStats } from "./asteroids-engine";
+import { ASTEROIDS_SKINS } from "./asteroids-skins";
 import type { GameCanvasHandle, GameCanvasProps } from "./engines";
 
 export type AsteroidsCanvasHandle = GameCanvasHandle;
@@ -14,7 +15,7 @@ const toGameStats = (stats: AsteroidsStats) => ({
 });
 
 const AsteroidsCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function AsteroidsCanvas(
-  { onStats, paused },
+  { onStats, paused, skinId },
   ref
 ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -28,7 +29,11 @@ const AsteroidsCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function A
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = new AsteroidsEngine(canvas, (stats) => onStats(toGameStats(stats)));
+    const engine = new AsteroidsEngine(
+      canvas,
+      (stats) => onStats(toGameStats(stats)),
+      ASTEROIDS_SKINS[skinId]
+    );
     engineRef.current = engine;
     engine.start();
 
@@ -42,6 +47,10 @@ const AsteroidsCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function A
   useEffect(() => {
     engineRef.current?.setPaused(paused);
   }, [paused]);
+
+  useEffect(() => {
+    engineRef.current?.setSkin(ASTEROIDS_SKINS[skinId]);
+  }, [skinId]);
 
   return (
     <canvas
