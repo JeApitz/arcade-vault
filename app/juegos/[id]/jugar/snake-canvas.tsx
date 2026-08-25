@@ -30,6 +30,14 @@ const SnakeCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Snake
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // mobile-porter (M9): ver nota equivalente en asteroids-canvas.tsx.
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = 600;
+    const cssHeight = 600;
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    canvas.getContext("2d")?.scale(dpr, dpr);
+
     const engine = new SnakeEngine(
       canvas,
       (stats) => onStats(toGameStats(stats)),

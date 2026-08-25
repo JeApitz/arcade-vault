@@ -346,7 +346,7 @@ export default function HomeContent({
             {recentScores.length === 0 ? (
               <p
                 className="mono"
-                style={{ fontSize: 11, color: "var(--ink-dim)", padding: "16px 0" }}
+                style={{ fontSize: 12, color: "var(--ink-dim)", padding: "16px 0" }}
               >
                 AÚN NO HAY PARTIDAS GUARDADAS_
               </p>
@@ -378,7 +378,7 @@ export default function HomeContent({
             {topPlayers.length === 0 ? (
               <p
                 className="mono"
-                style={{ fontSize: 11, color: "var(--ink-dim)", padding: "16px 0" }}
+                style={{ fontSize: 12, color: "var(--ink-dim)", padding: "16px 0" }}
               >
                 AÚN NO HAY PUNTUACIONES GUARDADAS_
               </p>
