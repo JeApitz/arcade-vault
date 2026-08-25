@@ -1,6 +1,6 @@
 # 03 — Juego Duelo — Identidad y pulido
 
-**Estado:** Borrador
+**Estado:** Implementado
 **Depende de:** SPEC 05, SPEC 06, SPEC 07, `specs/game-jam/duelo/01-duelo-nucleo-jugable.md`, `specs/game-jam/duelo/02-duelo-contenido-y-progresion.md`
 **Fecha:** 2026-08-20
 **Objetivo:** Dar a Duelo un HUD propio dibujado en canvas con identidad neón/magenta (marcador arcade, sets, línea central, estela de la pelota), confirmar el `crtAspect` responsive y cerrar la verificación final del leaderboard.

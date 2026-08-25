@@ -1,6 +1,6 @@
 # 13 — Frogger: encuadre, HUD y rendimiento
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Depende de:** SPEC frogger/01-frogger-core
 **Fecha:** 2026-08-25
 **Objetivo:** Corregir que Frogger no quepa completo en pantalla y que su HUD interno se superponga a las bocas destino, y aligerar su loop de render, sin afectar a ningún otro juego del catálogo.
