@@ -1,6 +1,6 @@
 # 02 — Juego Duelo — Contenido y progresión
 
-**Estado:** Borrador
+**Estado:** Implementado
 **Depende de:** SPEC 05, SPEC 06, SPEC 07, `specs/game-jam/duelo/01-duelo-nucleo-jugable.md`
 **Fecha:** 2026-08-20
 **Objetivo:** Extender `DueloEngine` con una partida a mejor de varios sets y una dificultad de CPU creciente por set, dando a `level` y `score` un significado real de progresión.

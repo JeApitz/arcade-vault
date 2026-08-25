@@ -1,6 +1,6 @@
 # 01 — Juego Duelo — Núcleo jugable
 
-**Estado:** Borrador
+**Estado:** Implementado
 **Depende de:** SPEC 05, SPEC 06, SPEC 07
 **Fecha:** 2026-08-20
 **Objetivo:** Construir desde cero un Pong clásico jugador-contra-CPU dentro de Arcade Vault, jugable de punta a punta con HUD genérico y guardado real de puntuación, con su propia entrada en el catálogo/leaderboard de Supabase.
