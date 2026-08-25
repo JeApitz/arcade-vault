@@ -93,7 +93,7 @@ export const ENGINES: Record<string, GameEngineEntry> = {
     Canvas: SnakeCanvas,
     hudLabel: "LONGITUD",
     initialStats: { score: 0, secondary: 1, level: 1, status: "playing" },
-    crtAspect: "1 / 1",
+    crtAspect: "15 / 16", // 600x640: banda de HUD (P6) sumada al tablero de 600x600
     touchControls: {
       mode: "buttons",
       buttons: [
