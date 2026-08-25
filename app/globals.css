@@ -38,6 +38,8 @@
   --safe-r: env(safe-area-inset-right, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
+
+  --nav-h: 85px; /* alto actual de .av-nav en desktop, usado por .av-player--fit */
 }
 
 /* ===== prefers-reduced-motion (mobile-porter, M10) =====
@@ -225,6 +227,7 @@ a {
   align-items: center;
   gap: 24px;
   padding: 14px 32px;
+  min-height: var(--nav-h);
   background: linear-gradient(180deg, rgba(10, 10, 15, 0.92), rgba(10, 10, 15, 0.78));
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
@@ -321,6 +324,7 @@ a {
     padding-top: max(12px, var(--safe-t));
     padding-left: max(16px, var(--safe-l));
     padding-right: max(16px, var(--safe-r));
+    --nav-h: 66px; /* alto real de .av-nav a este breakpoint (padding/links colapsados) */
   }
   .av-nav .links {
     display: none;
@@ -1197,6 +1201,36 @@ a {
   max-width: 1100px;
   margin: 32px auto;
   padding: 0 24px 64px;
+}
+
+/* Encuadre a viewport — solo Frogger (specs/13-frogger-encuadre-hud-rendimiento.md).
+ * El resto de los juegos no lleva esta clase y no cambia. */
+.av-player--fit {
+  height: calc(100vh - var(--nav-h));
+  height: calc(100dvh - var(--nav-h));
+  display: flex;
+  flex-direction: column;
+  margin: 16px auto;
+  padding: 0 24px 16px;
+}
+.av-player--fit .crt {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* Envoltorio de solo-tamaño (no flex por dentro): le da a .crt-screen un
+ * ancho y alto definidos por flexbox sin que .crt-screen participe en el
+ * algoritmo de flex — así su aspect-ratio + max-height se resuelve con el
+ * mismo mecanismo ya probado en los otros 4 juegos (bloque normal). */
+.av-player--fit .crt-viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+.av-player--fit .crt-screen {
+  max-height: 100%;
+  margin: 0 auto;
 }
 .player-hud {
   display: flex;
@@ -2158,6 +2192,10 @@ a {
   .av-player {
     padding: 0 16px 32px;
   }
+  .av-player--fit {
+    margin: 12px auto;
+    padding: 0 16px 12px;
+  }
   .player-hud {
     flex-direction: column;
     align-items: stretch;
@@ -2241,6 +2279,10 @@ a {
   .av-player {
     margin: 8px auto;
     padding: 0 12px 12px;
+  }
+  .av-player--fit {
+    margin: 8px auto;
+    padding: 0 12px 8px;
   }
   .player-hud {
     flex-direction: row;

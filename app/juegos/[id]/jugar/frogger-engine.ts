@@ -14,8 +14,9 @@ export interface FroggerStats {
 const COLS = 16;
 const ROWS = 14;
 const CELL = 40;
+const HUD_H = 40; // alto de la banda de HUD, en px lógicos
 const W = COLS * CELL; // 640
-const H = ROWS * CELL; // 560
+const H = HUD_H + ROWS * CELL; // 40 + 560 = 600
 
 // Zonas (índice de fila, 0 = arriba)
 const ROW_GOALS = 0;
@@ -97,6 +98,12 @@ export class FroggerEngine {
   private lastReported: FroggerStats | null = null;
   private skin: FroggerSkin;
 
+  // Capa estática cacheada: zonas + rejilla + marcos de bocas destino (no cambian frame a frame).
+  private staticLayer: OffscreenCanvas | HTMLCanvasElement | null = null;
+  private staticLayerCtx: CanvasRenderingContext2D | null = null;
+  // Píxeles de backing store por unidad lógica, para que la capa estática se vea nítida (frogger-canvas.tsx la fija tras medir el contenedor).
+  private deviceScale = 1;
+
   constructor(
     canvas: HTMLCanvasElement,
     onStats: (stats: FroggerStats) => void,
@@ -110,6 +117,7 @@ export class FroggerEngine {
     this.skin = skin;
 
     this.frog = this.freshFrog();
+    this.rebuildStaticLayer();
 
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.loop = this.loop.bind(this);
@@ -130,12 +138,29 @@ export class FroggerEngine {
   }
 
   setPaused(paused: boolean) {
+    if (this.paused === paused) return;
     this.paused = paused;
+    if (paused) {
+      this.draw(); // pinta una vez al entrar en pausa; el loop deja de repintar hasta reanudar
+    } else {
+      this.lastTime = null; // evita un salto de dt tras el tiempo detenido
+    }
   }
 
   setSkin(skin: FroggerSkin) {
     this.skin = skin;
+    this.rebuildStaticLayer();
     this.draw(); // fuerza el repintado: en pausa/game over el rAF puede tardar en refrescar
+  }
+
+  // width/height: tamaño CSS mostrado del canvas; dpr: devicePixelRatio ya topado en 2x.
+  // El motor sigue dibujando en coordenadas lógicas 640x600; frogger-canvas.tsx aplica el
+  // ctx.setTransform correspondiente sobre el canvas principal.
+  resize(width: number, height: number, dpr: number) {
+    if (width <= 0 || height <= 0) return;
+    this.deviceScale = (width * dpr) / W;
+    this.rebuildStaticLayer();
+    this.draw(); // fuerza el repintado a la nueva resolución sin esperar al próximo frame
   }
 
   forceGameOver() {
@@ -499,8 +524,29 @@ export class FroggerEngine {
     return skin.bg; // carretera
   }
 
-  private draw() {
-    const ctx = this.ctx;
+  private createOffscreenCanvas(
+    width: number,
+    height: number
+  ): OffscreenCanvas | HTMLCanvasElement {
+    if (typeof OffscreenCanvas !== "undefined") {
+      return new OffscreenCanvas(width, height);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  }
+
+  private rebuildStaticLayer() {
+    const boardH = ROWS * CELL;
+    const scale = this.deviceScale;
+    const layer = this.createOffscreenCanvas(
+      Math.max(1, Math.round(W * scale)),
+      Math.max(1, Math.round(boardH * scale))
+    );
+    const ctx = layer.getContext("2d") as CanvasRenderingContext2D | null;
+    if (!ctx) return;
+    ctx.scale(scale, scale); // el resto del método sigue dibujando en coordenadas lógicas
     const skin = this.skin;
 
     for (let row = 0; row < ROWS; row++) {
@@ -520,19 +566,39 @@ export class FroggerEngine {
     }
     ctx.restore();
 
-    // Bocas destino
+    // Marcos de bocas destino (el relleno de bocas alcanzadas se pinta por frame en draw()).
+    ctx.save();
+    ctx.strokeStyle = skin.goalBorder;
+    ctx.lineWidth = 2;
+    for (const col of GOAL_COLS) {
+      ctx.strokeRect(col * CELL + 2, ROW_GOALS * CELL + 2, CELL * 2 - 4, CELL - 4);
+    }
+    ctx.restore();
+
+    this.staticLayer = layer;
+    this.staticLayerCtx = ctx;
+  }
+
+  private draw() {
+    const ctx = this.ctx;
+    const skin = this.skin;
+
+    ctx.save();
+    ctx.translate(0, HUD_H);
+
+    if (this.staticLayer) {
+      ctx.drawImage(this.staticLayer as CanvasImageSource, 0, 0, W, ROWS * CELL);
+    }
+
+    // Relleno de bocas alcanzadas — cambia con el estado del juego, se pinta por frame.
     for (let i = 0; i < GOAL_COLS.length; i++) {
+      if (!this.goals[i]) continue;
       const col = GOAL_COLS[i];
       ctx.save();
-      ctx.strokeStyle = skin.goalBorder;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(col * CELL + 2, ROW_GOALS * CELL + 2, CELL * 2 - 4, CELL - 4);
-      if (this.goals[i]) {
-        ctx.fillStyle = skin.goalFilled;
-        ctx.beginPath();
-        ctx.ellipse((col + 1) * CELL, ROW_GOALS * CELL + CELL / 2, 14, 12, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      ctx.fillStyle = skin.goalFilled;
+      ctx.beginPath();
+      ctx.ellipse((col + 1) * CELL, ROW_GOALS * CELL + CELL / 2, 14, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
@@ -543,6 +609,9 @@ export class FroggerEngine {
     }
 
     this.drawFrog();
+
+    ctx.restore();
+
     this.drawHUD();
 
     if (this.status === "gameover") {
@@ -669,27 +738,31 @@ export class FroggerEngine {
     const ctx = this.ctx;
     const skin = this.skin;
     ctx.save();
+
+    ctx.fillStyle = skin.bg;
+    ctx.fillRect(0, 0, W, HUD_H);
+
     ctx.font = "bold 16px monospace";
     ctx.fillStyle = skin.fg;
     ctx.textBaseline = "middle";
 
     ctx.textAlign = "left";
-    ctx.fillText(`${this.score}`, 14, 24);
+    ctx.fillText(`${this.score}`, 14, HUD_H / 2 - 2);
 
     ctx.textAlign = "center";
-    ctx.fillText(`NIVEL ${this.level}`, W / 2, 24);
+    ctx.fillText(`NIVEL ${this.level}`, W / 2, HUD_H / 2 - 2);
 
     ctx.textAlign = "right";
     for (let i = 0; i < this.lives; i++) {
       ctx.beginPath();
       ctx.fillStyle = skin.accent;
-      ctx.ellipse(W - 14 - i * 22, 20, 7, 6, 0, 0, Math.PI * 2);
+      ctx.ellipse(W - 14 - i * 22, HUD_H / 2 - 2, 7, 6, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 
     const ratio = clamp(this.roundTime / this.roundTimeForLevel(this.level), 0, 1);
     ctx.fillStyle = ratio > 0.5 ? skin.timeGood : ratio > 0.25 ? skin.timeWarn : skin.danger;
-    ctx.fillRect(0, 2, W * ratio, 3);
+    ctx.fillRect(0, HUD_H - 3, W * ratio, 3);
     ctx.restore();
   }
 
@@ -713,8 +786,7 @@ export class FroggerEngine {
     if (this.destroyed) return;
 
     if (this.paused) {
-      this.lastTime = ts;
-      this.draw();
+      // El pintado de la pausa ya lo hizo setPaused(); mantenemos el rAF vivo sin dibujar.
       this.rafId = requestAnimationFrame(this.loop);
       return;
     }
