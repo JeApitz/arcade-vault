@@ -27,6 +27,14 @@ const INITIAL_STATS: TetrisStats = { score: 0, lines: 0, level: 1, status: "play
 const STAGE_W = 480;
 const STAGE_H = 600;
 
+// Tamaño lógico CSS (fijo) de los canvas del motor (TetrisEngine: BOARD_W/H, NEXT_SIZE).
+// El `scale` calculado más abajo encoge/agranda visualmente el stage completo vía
+// `transform: scale()`, nunca el tamaño lógico de estos dos canvas.
+const BOARD_W = 300;
+const BOARD_H = 600;
+const NEXT_SIZE = 120;
+const MAX_DPR = 2;
+
 const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function TetrisCanvas(
   { onStats, paused, skinId },
   ref
@@ -59,6 +67,22 @@ const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Tetr
       TETRIS_SKINS[skinId]
     );
     engineRef.current = engine;
+
+    // DPR real topado a 2x: el tamaño CSS lógico de ambos canvas es fijo (no depende
+    // del `scale` de transform, que solo encoge/agranda visualmente el stage completo),
+    // así que solo hace falta escalar el backing store por DPR, no por contenedor.
+    const applyDpr = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+      boardCanvas.width = Math.round(BOARD_W * dpr);
+      boardCanvas.height = Math.round(BOARD_H * dpr);
+      nextCanvas.width = Math.round(NEXT_SIZE * dpr);
+      nextCanvas.height = Math.round(NEXT_SIZE * dpr);
+      boardCanvas.getContext("2d")?.setTransform(dpr, 0, 0, dpr, 0, 0);
+      nextCanvas.getContext("2d")?.setTransform(dpr, 0, 0, dpr, 0, 0);
+      engine.resize(BOARD_W, BOARD_H, dpr);
+    };
+
+    applyDpr();
     engine.start();
 
     return () => {
@@ -109,7 +133,13 @@ const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Tetr
             } as CSSProperties
           }
         >
-          <canvas ref={boardCanvasRef} width={300} height={600} />
+          <canvas
+            ref={boardCanvasRef}
+            className="tetris-board-canvas"
+            width={BOARD_W}
+            height={BOARD_H}
+            style={{ width: BOARD_W, height: BOARD_H }}
+          />
 
           <aside className="tetris-panel">
             <div className="tetris-section">
@@ -127,7 +157,13 @@ const TetrisCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Tetr
 
             <div className="tetris-section">
               <span className="tetris-label">NEXT</span>
-              <canvas ref={nextCanvasRef} width={120} height={120} />
+              <canvas
+                ref={nextCanvasRef}
+                className="tetris-next-canvas"
+                width={NEXT_SIZE}
+                height={NEXT_SIZE}
+                style={{ width: NEXT_SIZE, height: NEXT_SIZE }}
+              />
             </div>
 
             <div className="tetris-section tetris-controls">

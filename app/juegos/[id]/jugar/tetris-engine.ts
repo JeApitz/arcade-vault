@@ -13,6 +13,10 @@ export interface TetrisStats {
 const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
+const BOARD_W = COLS * BLOCK; // 300
+const BOARD_H = ROWS * BLOCK; // 600
+const NEXT_BLOCK = 30;
+const NEXT_SIZE = NEXT_BLOCK * 4; // 120
 
 const PIECES: (number[][] | null)[] = [
   null,
@@ -92,6 +96,11 @@ export class TetrisEngine {
   private lastReported: TetrisStats | null = null;
   private skin: TetrisSkin;
 
+  // Capa estática cacheada: rejilla del tablero (no cambia frame a frame, solo con skin/tamaño).
+  private staticLayer: OffscreenCanvas | HTMLCanvasElement | null = null;
+  // Píxeles de backing store por unidad lógica, fijado por tetris-canvas.tsx tras medir DPR.
+  private deviceScale = 1;
+
   constructor(
     boardCanvas: HTMLCanvasElement,
     nextCanvas: HTMLCanvasElement,
@@ -113,11 +122,14 @@ export class TetrisEngine {
     this.onStats = onStats;
 
     this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handleVisibility = this.handleVisibility.bind(this);
     this.loop = this.loop.bind(this);
+    this.rebuildStaticLayer();
   }
 
   start() {
     window.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("visibilitychange", this.handleVisibility);
     this.initGame();
     this.rafId = requestAnimationFrame(this.loop);
   }
@@ -128,21 +140,44 @@ export class TetrisEngine {
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     this.rafId = null;
     window.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("visibilitychange", this.handleVisibility);
   }
 
   setPaused(paused: boolean) {
+    if (this.paused === paused) return;
     this.paused = paused;
+    if (paused) {
+      this.draw(); // pinta una vez al entrar en pausa; el loop deja de repintar hasta reanudar
+    } else {
+      this.lastTime = null; // evita un salto de dt tras el tiempo detenido
+    }
   }
 
   setSkin(skin: TetrisSkin) {
     this.skin = skin;
+    this.rebuildStaticLayer();
     this.draw(); // fuerza repintado: en pausa/game over el loop no cambia de estado por sí solo
+  }
+
+  // width/height: tamaño lógico CSS del canvas del tablero (fijo, 300x600); dpr: devicePixelRatio topado en 2x.
+  // El motor sigue dibujando en coordenadas lógicas; tetris-canvas.tsx aplica el ctx.setTransform
+  // correspondiente sobre ambos canvas (tablero y siguiente pieza).
+  resize(width: number, height: number, dpr: number) {
+    if (width <= 0 || height <= 0 || dpr <= 0) return;
+    this.deviceScale = (width * dpr) / BOARD_W;
+    this.rebuildStaticLayer();
+    if (this.current) this.draw(); // repinta ya, salvo que initGame() aún no haya corrido (llamada previa a start())
   }
 
   forceGameOver() {
     if (this.status === "gameover") return;
     this.status = "gameover";
     this.reportStats();
+    this.draw(); // el loop deja de repintar en game over: pinta el último frame ya
+  }
+
+  private handleVisibility() {
+    if (!document.hidden) this.lastTime = null; // evita un salto de dt tras volver de segundo plano
   }
 
   private createBoard(): number[][] {
@@ -256,6 +291,7 @@ export class TetrisEngine {
     if (this.collide(this.current.shape, this.current.x, this.current.y)) {
       this.status = "gameover";
       this.reportStats();
+      this.draw(); // el loop deja de repintar en game over: pinta el último frame ya
     }
   }
 
@@ -311,8 +347,30 @@ export class TetrisEngine {
     ctx.globalAlpha = 1;
   }
 
-  private drawGrid() {
-    const ctx = this.boardCtx;
+  private createOffscreenCanvas(
+    width: number,
+    height: number
+  ): OffscreenCanvas | HTMLCanvasElement {
+    if (typeof OffscreenCanvas !== "undefined") {
+      return new OffscreenCanvas(width, height);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  }
+
+  // Rejilla del tablero: estática mientras no cambie el skin ni el tamaño — se cachea
+  // en un offscreen a resolución real y se vuelca por frame con un único drawImage.
+  private rebuildStaticLayer() {
+    const scale = this.deviceScale;
+    const layer = this.createOffscreenCanvas(
+      Math.max(1, Math.round(BOARD_W * scale)),
+      Math.max(1, Math.round(BOARD_H * scale))
+    );
+    const ctx = layer.getContext("2d") as CanvasRenderingContext2D | null;
+    if (!ctx) return;
+    ctx.scale(scale, scale); // el resto del método sigue dibujando en coordenadas lógicas
     ctx.strokeStyle = this.skin.grid;
     ctx.lineWidth = 0.5;
     for (let c = 1; c < COLS; c++) {
@@ -327,12 +385,15 @@ export class TetrisEngine {
       ctx.lineTo(COLS * BLOCK, r * BLOCK);
       ctx.stroke();
     }
+    this.staticLayer = layer;
   }
 
   private draw() {
     const ctx = this.boardCtx;
-    ctx.clearRect(0, 0, this.boardCanvas.width, this.boardCanvas.height);
-    this.drawGrid();
+    ctx.clearRect(0, 0, BOARD_W, BOARD_H);
+    if (this.staticLayer) {
+      ctx.drawImage(this.staticLayer as CanvasImageSource, 0, 0, BOARD_W, BOARD_H);
+    }
 
     for (let r = 0; r < ROWS; r++)
       for (let c = 0; c < COLS; c++) this.drawBlock(ctx, c, r, this.board[r][c], BLOCK);
@@ -364,15 +425,14 @@ export class TetrisEngine {
   }
 
   private drawNext() {
-    const NB = 30;
     const ctx = this.nextCtx;
-    ctx.clearRect(0, 0, this.nextCanvas.width, this.nextCanvas.height);
+    ctx.clearRect(0, 0, NEXT_SIZE, NEXT_SIZE);
     const shape = this.next.shape;
     const offX = Math.floor((4 - shape[0].length) / 2);
     const offY = Math.floor((4 - shape.length) / 2);
     for (let r = 0; r < shape.length; r++)
       for (let c = 0; c < shape[r].length; c++)
-        this.drawBlock(ctx, offX + c, offY + r, shape[r][c], NB);
+        this.drawBlock(ctx, offX + c, offY + r, shape[r][c], NEXT_BLOCK);
   }
 
   setKey(code: string, pressed: boolean) {
@@ -408,13 +468,13 @@ export class TetrisEngine {
     if (this.destroyed) return;
 
     if (this.paused || this.status === "gameover") {
-      this.lastTime = ts;
-      this.draw();
+      // El pintado ya lo hizo setPaused()/forceGameOver()/spawn(); mantenemos el rAF
+      // vivo sin trabajo de dibujo mientras no haya nada nuevo que mostrar.
       this.rafId = requestAnimationFrame(this.loop);
       return;
     }
 
-    const dt = this.lastTime === null ? 0 : ts - this.lastTime;
+    const dt = this.lastTime === null ? 0 : Math.min(ts - this.lastTime, 50);
     this.lastTime = ts;
     this.dropAccum += dt;
     if (this.dropAccum >= this.dropInterval) {
