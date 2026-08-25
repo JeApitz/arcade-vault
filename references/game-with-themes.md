@@ -11,6 +11,7 @@ Skins obligatorios en todo juego: `clasico` (default), `neon`, `retro`.
 | tetris     | ✅      | ✅   | ✅    | tetris-skins.ts    | n/a (procedural) + chrome DOM | R1–R9     | 2026-08-24 |
 | arkanoid   | ✅      | ✅   | ✅    | arkanoid-skins.ts  | hoja teñida pre-horneada      | R1–R9     | 2026-08-24 |
 | snake      | ✅      | ✅   | ✅    | snake-skins.ts     | ctx.filter en la fruta        | R1–R9     | 2026-08-24 |
+| frogger    | ✅      | ✅   | ✅    | frogger-skins.ts   | n/a (vectorial/procedural)    | R1–R9     | 2026-08-25 |
 
 Leyenda: ✅ listo · 🟡 en curso · ⬜ pendiente · ❌ bloqueado (anotar en Pendientes).
 
@@ -36,10 +37,10 @@ Leyenda: ✅ listo · 🟡 en curso · ⬜ pendiente · ❌ bloqueado (anotar en
 
 ## Pendientes y riesgos conocidos
 
-- Pendientes: ninguno — los 4 juegos del catálogo tienen sus 3 skins implementados.
-- Los cuatro juegos implementados (asteroides, arkanoid, snake, tetris) pasan R1–R9 en sus tres
-  skins sin excepciones. `clasico` se ajustó mínimamente en cada uno (ver `### Por juego`) para
-  cumplir R3/R5/R7 sin perder su identidad visual.
+- Pendientes: ninguno — los 5 juegos del catálogo (asteroides, tetris, arkanoid, snake, frogger)
+  tienen sus 3 skins implementados.
+- Los cinco juegos pasan R1–R9 en sus tres skins sin excepciones. `clasico` se ajustó mínimamente
+  en cada uno (ver `### Por juego`) para cumplir R3/R5/R7 sin perder su identidad visual.
 
 ## Por juego
 
@@ -185,3 +186,43 @@ yellow/hotpink/gray`), `paddleTint`, `ballTint` — los tres `null` juntos en `c
 - Gotcha: `.tetris-value` en `globals.css` tenía el color `#7aa2f7` hardcodeado sin `var()`; se
   convirtió a `var(--tetris-value, #7aa2f7)` para que el campo `dom.value` del skin pueda
   sobreescribirlo (mismo patrón que las otras 7 vars `--tetris-*`, que ya usaban fallback).
+
+### frogger
+
+- Archivo: `app/juegos/[id]/jugar/frogger-skins.ts`. `FroggerExtra`: `cars` (tupla de 3, coches),
+  `truck`/`truckCabin`/`tire`, `log`/`logGrain`, `turtle`/`turtleSubmerged`, `zoneRiver`/`zoneSafe`/
+  `zoneGoal` (fondos de zona; `zoneRoad` reutiliza el `bg` del núcleo, es la zona dominante),
+  `goalBorder`/`goalFilled`, `timeGood`/`timeWarn` (`danger` del núcleo cubre el estado "malo" de
+  la barra de tiempo), `eyeWhite`/`eyePupil` (blanco/negro fijos en los 3 skins — detalle cosmético
+  menor, no necesita variar).
+- Técnica: procedural puro (`fillRect`/`ellipse`/`arc`, sin sprites bitmap), igual que
+  asteroides/tetris. `FroggerEngine` gana un último parámetro `skin` en el constructor y un método
+  público `setSkin()` que reasigna `this.skin` y fuerza `this.draw()`.
+- Adición nueva (no cambia mecánica): una línea divisoria sutil entre filas usando `skin.grid`,
+  para que el campo `grid` del núcleo tenga un uso real — el motor original no dibujaba ninguna
+  rejilla, solo 4 zonas de color sólido por fila.
+- `clasico`: casi calca los literales originales de `frogger-engine.ts` — fondo/carretera
+  `#0a0a0a` (ya cumplía R4/R5 sin ajuste, no es negro puro), río `#0a1a33`, zona segura `#0a2410`,
+  bocas `#0f3018` con borde `#e8c547`, coches `["#ff3b5c","#f5ff5d","#5df5ff"]`, camión `#9aa0a6`/
+  cabina `#5b6066`, tronco `#8a5a30`, HUD blanco, barra de tiempo verde/amarillo/rojo original.
+  Dos desviaciones mínimas por R3: rana/meta `#5ee600` (era `#7CFC00`, Δhue +25° sobre el amarillo
+  de los coches y +25° sobre la tortuga) y tortuga `#2ecf7e` (era `#3ecf3e`, vira hacia el teal,
+  Δhue 54° vs la rana) — ambas leen casi idénticas a las originales a simple vista.
+  `glow: null`.
+- `neon`: coches `["#ff2f4d","#ffe066","#5df5ff"]`, camión violeta `#b98aff`/cabina `#8a5cff`,
+  tronco naranja `#ff8a3a`, tortuga celeste `#5dc8ff`, rana/meta verde-lima `#8aff5d` con glow
+  (blur 10, Δhue 0° vs accent), borde de meta magenta `#ff2fe0`, fondo violeta casi-negro `#0a0414`.
+- `retro`: coches `["#ff5a3a","#ffe066","#5de0ff"]`, camión `#c8ff5d`/cabina `#3ecf3e`, tronco rosa
+  `#ff5a9e`, tortuga menta `#5dffc8`, rana/meta verde fósforo `#4dff4d`, borde de meta ámbar
+  `#ffb000`, fondo `#0d1400`, sin glow para distinguirse de `neon`.
+- Contraste medido con `assertSkinContrast` real (import directo de `frogger-skins.ts` con
+  `NODE_ENV=development`, sin errores en consola) más medición manual de ratios: `clasico` fg/bg
+  19.80, fgDim/bg 8.45, accent/bg 12.06, grid/bg 1.18, danger/bg 5.69; `neon` fg/bg 18.06, fgDim/bg
+  8.08, accent/bg 15.90, grid/bg 1.24, danger/bg 5.54; `retro` fg/bg 16.46, fgDim/bg 7.97, accent/bg
+  14.08, grid/bg 1.44, danger/bg 6.06. Los 3 skins pasan R1–R9 sin excepciones.
+- Gotcha: los `Entity` guardaban su color propio (`color: string`) fijado en `buildLanes()` al
+  construir cada carril — con un skin dinámico eso habría quedado fosilizado con el color del skin
+  activo al momento de generar el nivel. Se reemplazó por `carIndex?: number` (solo para coches,
+  índice 0..2 en `skin.cars`) y `drawEntity` resuelve camión/tronco/tortuga directo desde
+  `this.skin` en cada frame — así el cambio de skin en caliente afecta a las entidades ya en pantalla
+  sin reconstruir los carriles.

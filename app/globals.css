@@ -928,6 +928,30 @@ a {
   background: repeating-linear-gradient(0deg, rgba(245, 255, 0, 0.06) 0 2px, transparent 2px 30px);
 }
 
+.cover-frogger {
+  background: linear-gradient(180deg, #0a1a33 0 35%, #0a0a0a 35% 75%, #0a2410 75% 100%);
+}
+.cover-frogger::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #8a5a30 0 30px, transparent 30px) 10% 20% / 90px 12px no-repeat,
+    linear-gradient(90deg, #8a5a30 0 30px, transparent 30px) 45% 28% / 90px 12px no-repeat,
+    linear-gradient(90deg, var(--yellow) 0 18px, transparent 18px) 15% 58% / 60px 10px no-repeat,
+    linear-gradient(90deg, var(--cyan) 0 18px, transparent 18px) 55% 66% / 60px 10px no-repeat;
+}
+.cover-frogger::before {
+  content: "◉";
+  position: absolute;
+  left: 50%;
+  top: 84%;
+  transform: translate(-50%, -50%);
+  color: var(--green);
+  font-size: 22px;
+  text-shadow: 0 0 8px var(--green);
+}
+
 .cover-arkanoid {
   background: radial-gradient(circle at 50% 75%, #002a12, #05050a);
 }
