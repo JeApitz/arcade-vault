@@ -1,7 +1,7 @@
 // Motor del juego SNAKE, construido desde cero (sin referencia en references/started-games/).
 // Todo el estado vive en propiedades de instancia de SnakeEngine (sin globales de módulo).
 
-import { drawFruit, loadFruitSheet, pickRandomFruit } from "./snake-sprites";
+import { drawFruit, getFruitSheet, loadFruitSheet, pickRandomFruit } from "./snake-sprites";
 import type { SnakeSkin } from "./snake-skins";
 
 export interface SnakeStats {
@@ -13,8 +13,9 @@ export interface SnakeStats {
 
 const GRID = 20;
 const CELL = 30;
-const W = GRID * CELL;
-const H = GRID * CELL;
+const HUD_H = 40; // alto de la banda de HUD, en px lógicos (P6: separada del área jugable)
+const W = GRID * CELL; // 600
+const H = HUD_H + GRID * CELL; // 40 + 600 = 640
 
 const START_TICK_MS = 140;
 const MIN_TICK_MS = 60;
@@ -58,6 +59,12 @@ export class SnakeEngine {
   private spriteReady = false;
   private skin: SnakeSkin;
 
+  // Capa estática cacheada: fondo + rejilla (no cambian frame a frame, solo con skin/tamaño).
+  private staticLayer: OffscreenCanvas | HTMLCanvasElement | null = null;
+  private staticLayerCtx: CanvasRenderingContext2D | null = null;
+  // Píxeles de backing store por unidad lógica (snake-canvas.tsx la fija tras medir el contenedor).
+  private deviceScale = 1;
+
   constructor(canvas: HTMLCanvasElement, onStats: (stats: SnakeStats) => void, skin: SnakeSkin) {
     this.canvas = canvas;
     const ctx = canvas.getContext("2d");
@@ -66,12 +73,16 @@ export class SnakeEngine {
     this.onStats = onStats;
     this.skin = skin;
 
+    this.rebuildStaticLayer();
+
     this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handleVisibility = this.handleVisibility.bind(this);
     this.loop = this.loop.bind(this);
   }
 
   start() {
     window.addEventListener("keydown", this.handleKeyDown);
+    document.addEventListener("visibilitychange", this.handleVisibility);
     loadFruitSheet(() => {
       this.spriteReady = true;
     });
@@ -85,20 +96,44 @@ export class SnakeEngine {
     if (this.rafId !== null) cancelAnimationFrame(this.rafId);
     this.rafId = null;
     window.removeEventListener("keydown", this.handleKeyDown);
+    document.removeEventListener("visibilitychange", this.handleVisibility);
   }
 
   setPaused(paused: boolean) {
+    if (this.paused === paused) return;
     this.paused = paused;
+    if (paused) {
+      this.draw(); // pinta una vez al entrar en pausa; el loop deja de repintar hasta reanudar
+    } else {
+      this.lastTime = null; // evita un salto de dt tras el tiempo detenido
+    }
   }
 
   setSkin(skin: SnakeSkin) {
     this.skin = skin;
+    this.rebuildStaticLayer();
     this.draw(); // fuerza el repintado: en pausa/game over el rAF puede tardar en refrescar
+  }
+
+  // width/height: tamaño CSS mostrado del canvas; dpr: devicePixelRatio ya topado en 2x.
+  // El motor sigue dibujando en coordenadas lógicas W x H; snake-canvas.tsx aplica el
+  // ctx.setTransform correspondiente sobre el canvas principal.
+  resize(width: number, height: number, dpr: number) {
+    if (width <= 0 || height <= 0) return;
+    this.deviceScale = (width * dpr) / W;
+    this.rebuildStaticLayer();
+    this.draw(); // fuerza el repintado a la nueva resolución sin esperar al próximo frame
+  }
+
+  private handleVisibility() {
+    if (document.hidden) return;
+    this.lastTime = null; // evita un salto de dt tras el tiempo en segundo plano
   }
 
   forceGameOver() {
     if (this.status === "gameover") return;
     this.status = "gameover";
+    this.lastTime = null;
     this.reportStats();
   }
 
@@ -159,6 +194,7 @@ export class SnakeEngine {
     this.bestScore = Math.max(this.bestScore, this.score);
     this.status = "playing";
     this.accumMs = 0;
+    this.lastTime = null; // evita un salto de dt entre el reset y el próximo frame
     this.spawnFruit();
     this.reportStats();
   }
@@ -191,11 +227,13 @@ export class SnakeEngine {
 
     if (newHead.x < 0 || newHead.x >= GRID || newHead.y < 0 || newHead.y >= GRID) {
       this.status = "gameover";
+      this.lastTime = null;
       this.reportStats();
       return;
     }
     if (this.snake.some((s) => dirsEqual(s, newHead))) {
       this.status = "gameover";
+      this.lastTime = null;
       this.reportStats();
       return;
     }
@@ -226,11 +264,33 @@ export class SnakeEngine {
     }
   }
 
-  private draw() {
-    const ctx = this.ctx;
+  private createOffscreenCanvas(
+    width: number,
+    height: number
+  ): OffscreenCanvas | HTMLCanvasElement {
+    if (typeof OffscreenCanvas !== "undefined") {
+      return new OffscreenCanvas(width, height);
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  }
+
+  // Fondo + rejilla: estáticos mientras no cambie el skin ni el tamaño (P2/P3).
+  private rebuildStaticLayer() {
+    const scale = this.deviceScale;
+    const layer = this.createOffscreenCanvas(
+      Math.max(1, Math.round(W * scale)),
+      Math.max(1, Math.round(GRID * CELL * scale))
+    );
+    const ctx = layer.getContext("2d") as CanvasRenderingContext2D | null;
+    if (!ctx) return;
+    ctx.scale(scale, scale); // el resto del método sigue dibujando en coordenadas lógicas
     const skin = this.skin;
+
     ctx.fillStyle = skin.bg;
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillRect(0, 0, W, GRID * CELL);
 
     ctx.save();
     ctx.strokeStyle = skin.grid;
@@ -238,7 +298,7 @@ export class SnakeEngine {
     for (let i = 1; i < GRID; i++) {
       ctx.beginPath();
       ctx.moveTo(i * CELL, 0);
-      ctx.lineTo(i * CELL, H);
+      ctx.lineTo(i * CELL, GRID * CELL);
       ctx.stroke();
       ctx.beginPath();
       ctx.moveTo(0, i * CELL);
@@ -247,17 +307,31 @@ export class SnakeEngine {
     }
     ctx.restore();
 
-    if (this.spriteReady) {
-      ctx.save();
-      ctx.filter = skin.fruitFilter ?? "none";
+    this.staticLayer = layer;
+    this.staticLayerCtx = ctx;
+  }
+
+  private draw() {
+    const ctx = this.ctx;
+    const skin = this.skin;
+
+    ctx.save();
+    ctx.translate(0, HUD_H);
+
+    if (this.staticLayer) {
+      ctx.drawImage(this.staticLayer as CanvasImageSource, 0, 0, W, GRID * CELL);
+    }
+
+    const sheet = this.spriteReady ? getFruitSheet(skin.fruitFilter) : null;
+    if (sheet) {
       drawFruit(
         ctx,
+        sheet,
         this.fruit.spriteKey,
         this.fruit.x * CELL + 2,
         this.fruit.y * CELL + 2,
         CELL - 4
       );
-      ctx.restore();
     } else {
       ctx.fillStyle = skin.danger;
       ctx.fillRect(this.fruit.x * CELL + 4, this.fruit.y * CELL + 4, CELL - 8, CELL - 8);
@@ -281,6 +355,8 @@ export class SnakeEngine {
       ctx.restore();
     });
 
+    ctx.restore();
+
     this.drawHUD();
 
     if (this.status === "gameover") {
@@ -290,16 +366,21 @@ export class SnakeEngine {
 
   private drawHUD() {
     const ctx = this.ctx;
+    const skin = this.skin;
     ctx.save();
+
+    ctx.fillStyle = skin.bg;
+    ctx.fillRect(0, 0, W, HUD_H);
+
     ctx.font = "bold 16px monospace";
-    ctx.fillStyle = this.skin.fg;
+    ctx.fillStyle = skin.fg;
     ctx.textBaseline = "middle";
 
     ctx.textAlign = "left";
-    ctx.fillText(`🍎 ${this.score}`, 14, 24);
+    ctx.fillText(`🍎 ${this.score}`, 14, HUD_H / 2);
 
     ctx.textAlign = "right";
-    ctx.fillText(`🏆 ${this.bestScore}`, W - 14, 24);
+    ctx.fillText(`🏆 ${this.bestScore}`, W - 14, HUD_H / 2);
     ctx.restore();
   }
 
@@ -323,8 +404,7 @@ export class SnakeEngine {
     if (this.destroyed) return;
 
     if (this.paused) {
-      this.lastTime = ts;
-      this.draw();
+      // El pintado de la pausa ya lo hizo setPaused(); mantenemos el rAF vivo sin dibujar.
       this.rafId = requestAnimationFrame(this.loop);
       return;
     }

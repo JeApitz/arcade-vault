@@ -62,15 +62,50 @@ export function pickRandomFruit(): string {
   return FRUIT_KEYS[Math.floor(Math.random() * FRUIT_KEYS.length)];
 }
 
+// Hojas teñidas horneadas UNA vez por filtro (no por frame) — mismo patrón que
+// arkanoid-sprites.ts (getTintedSheet), adaptado a ctx.filter en vez de blend
+// por color, porque la fruta es un sprite fotográfico multicolor (nunca se tiñe
+// con composite operations, ver snake-skins.ts). Los huecos entre frames de
+// fruits.png (>=40px) son mayores que el blur de cualquier fruitFilter definido
+// (<=10px), así que hornear la hoja completa de una vez no produce sangrado
+// entre frutas vecinas.
+const tintedSheets = new Map<string, HTMLCanvasElement>();
+
+/**
+ * Devuelve la hoja a usar para un `fruitFilter` dado: la imagen original sin
+ * filtro (`filter` null, skin `clasico`), o una copia horneada una sola vez con
+ * `ctx.filter` aplicado y cacheada por string de filtro. `null` si la hoja
+ * original aún no cargó.
+ */
+export function getFruitSheet(filter: string | null): CanvasImageSource | null {
+  if (!sheetLoaded || !sheetImg) return null;
+  if (!filter) return sheetImg;
+
+  const cached = tintedSheets.get(filter);
+  if (cached) return cached;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = sheetImg.width;
+  canvas.height = sheetImg.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return sheetImg;
+  ctx.filter = filter;
+  ctx.drawImage(sheetImg, 0, 0);
+  ctx.filter = "none";
+
+  tintedSheets.set(filter, canvas);
+  return canvas;
+}
+
 export function drawFruit(
   ctx: CanvasRenderingContext2D,
+  sheet: CanvasImageSource,
   key: string,
   dx: number,
   dy: number,
   size: number
 ): void {
-  if (!sheetLoaded || !sheetImg) return;
   const f = FRUITS[key];
   if (!f) return;
-  ctx.drawImage(sheetImg, f.x, f.y, f.w, f.h, dx, dy, size, size);
+  ctx.drawImage(sheet, f.x, f.y, f.w, f.h, dx, dy, size, size);
 }
