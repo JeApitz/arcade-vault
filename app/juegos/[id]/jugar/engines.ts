@@ -45,6 +45,7 @@ interface GameEngineEntry {
   initialStats: GameStats;
   crtAspect: string; // relación de aspecto del marco CRT, según la forma del campo de juego
   hidePauseOverlay?: boolean; // true si el propio motor dibuja su overlay de pausa en el canvas
+  fitViewport?: boolean; // true = el marco CRT se ajusta al alto disponible del viewport (letterbox)
   touchControls: TouchControlsConfig;
 }
 
@@ -107,7 +108,8 @@ export const ENGINES: Record<string, GameEngineEntry> = {
     Canvas: FroggerCanvas,
     hudLabel: "VIDAS",
     initialStats: { score: 0, secondary: 3, level: 1, status: "playing" },
-    crtAspect: "8 / 7",
+    crtAspect: "16 / 15",
+    fitViewport: true,
     touchControls: {
       mode: "buttons",
       buttons: [

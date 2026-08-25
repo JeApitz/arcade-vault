@@ -64,7 +64,7 @@ export default function GamePlayer({ game }: { game: Game }) {
   };
 
   return (
-    <div className="av-player fade-in">
+    <div className={`av-player fade-in${engine?.fitViewport ? " av-player--fit" : ""}`}>
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
@@ -118,41 +118,49 @@ export default function GamePlayer({ game }: { game: Game }) {
       </div>
 
       <div className="crt">
-        <div
-          className="crt-screen"
-          style={{ "--crt-aspect": engine?.crtAspect ?? "4 / 3" } as CSSProperties}
-        >
-          {engine && skinId !== null && (
-            <engine.Canvas
-              key={resetKey}
-              ref={canvasRef}
-              onStats={setStats}
-              paused={paused}
-              onPauseChange={setPaused}
-              skinId={skinId}
-            />
-          )}
-          {paused && !engine?.hidePauseOverlay && (
-            <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
-              <div>
-                <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
-                  EN PAUSA
+        {(() => {
+          const screen = (
+            <div
+              className="crt-screen"
+              style={{ "--crt-aspect": engine?.crtAspect ?? "4 / 3" } as CSSProperties}
+            >
+              {engine && skinId !== null && (
+                <engine.Canvas
+                  key={resetKey}
+                  ref={canvasRef}
+                  onStats={setStats}
+                  paused={paused}
+                  onPauseChange={setPaused}
+                  skinId={skinId}
+                />
+              )}
+              {paused && !engine?.hidePauseOverlay && (
+                <div className="crt-content" style={{ background: "rgba(0,0,0,0.6)", zIndex: 5 }}>
+                  <div>
+                    <div className="pixel neon-yellow" style={{ fontSize: 22 }}>
+                      EN PAUSA
+                    </div>
+                    <div
+                      className="mono"
+                      style={{
+                        fontSize: 12,
+                        color: "var(--ink-dim)",
+                        marginTop: 10,
+                        letterSpacing: "0.16em",
+                      }}
+                    >
+                      PULSA REANUDAR PARA CONTINUAR
+                    </div>
+                  </div>
                 </div>
-                <div
-                  className="mono"
-                  style={{
-                    fontSize: 12,
-                    color: "var(--ink-dim)",
-                    marginTop: 10,
-                    letterSpacing: "0.16em",
-                  }}
-                >
-                  PULSA REANUDAR PARA CONTINUAR
-                </div>
-              </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+          // fitViewport (solo Frogger): envuelve crt-screen en un contenedor
+          // dimensionado por flex para que su aspect-ratio se resuelva como
+          // bloque normal, dejando lugar a crt-bottom y el panel táctil.
+          return engine?.fitViewport ? <div className="crt-viewport">{screen}</div> : screen;
+        })()}
         <div className="crt-bottom">
           <span className="led">SEÑAL OK</span>
           <span>{game.title} · CRT-83 · 60 HZ</span>

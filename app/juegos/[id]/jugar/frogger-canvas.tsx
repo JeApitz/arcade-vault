@@ -14,10 +14,16 @@ const toGameStats = (stats: FroggerStats) => ({
   status: stats.status,
 });
 
+// Tamaño lógico del tablero de FroggerEngine (frogger-engine.ts: W, H).
+const LOGICAL_W = 640;
+const LOGICAL_H = 600;
+const MAX_DPR = 2;
+
 const FroggerCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function FroggerCanvas(
   { onStats, paused, skinId },
   ref
 ) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<FroggerEngine | null>(null);
 
@@ -27,15 +33,9 @@ const FroggerCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Fro
   }));
 
   useEffect(() => {
+    const container = containerRef.current;
     const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    const cssWidth = 640;
-    const cssHeight = 560;
-    canvas.width = cssWidth * dpr;
-    canvas.height = cssHeight * dpr;
-    canvas.getContext("2d")?.scale(dpr, dpr);
+    if (!container || !canvas) return;
 
     const engine = new FroggerEngine(
       canvas,
@@ -43,9 +43,27 @@ const FroggerCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Fro
       FROGGER_SKINS[skinId]
     );
     engineRef.current = engine;
+
+    const applySize = () => {
+      const rect = container.getBoundingClientRect();
+      const width = rect.width || LOGICAL_W;
+      const height = rect.height || LOGICAL_H;
+      const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      const ctx = canvas.getContext("2d");
+      ctx?.setTransform((width / LOGICAL_W) * dpr, 0, 0, (height / LOGICAL_H) * dpr, 0, 0);
+      engine.resize(width, height, dpr);
+    };
+
+    applySize();
     engine.start();
 
+    const observer = new ResizeObserver(applySize);
+    observer.observe(container);
+
     return () => {
+      observer.disconnect();
       engine.destroy();
       engineRef.current = null;
     };
@@ -61,12 +79,17 @@ const FroggerCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Fro
   }, [skinId]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={640}
-      height={560}
-      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", display: "block" }}
-    />
+    <div
+      ref={containerRef}
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
+    >
+      <canvas
+        ref={canvasRef}
+        width={LOGICAL_W}
+        height={LOGICAL_H}
+        style={{ width: "100%", height: "100%", display: "block" }}
+      />
+    </div>
   );
 });
 
