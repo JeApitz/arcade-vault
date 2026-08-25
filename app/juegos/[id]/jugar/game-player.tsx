@@ -158,7 +158,9 @@ export default function GamePlayer({ game }: { game: Game }) {
           <span>{game.title} · CRT-83 · 60 HZ</span>
           <span>CARGA · 1MB</span>
         </div>
-        {engine && <TouchControls touchControls={engine.touchControls} handle={canvasRef} />}
+        {engine && (
+          <TouchControls gameId={game.id} touchControls={engine.touchControls} handle={canvasRef} />
+        )}
       </div>
 
       {showModal && (
