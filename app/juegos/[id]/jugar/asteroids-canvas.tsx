@@ -30,6 +30,16 @@ const AsteroidsCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function A
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // mobile-porter (M9): backing store en píxeles físicos (devicePixelRatio)
+    // para nitidez en pantallas hi-dpi; la lógica de coordenadas del motor
+    // sigue asumiendo el espacio lógico 800x600 gracias al ctx.scale.
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = 800;
+    const cssHeight = 600;
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    canvas.getContext("2d")?.scale(dpr, dpr);
+
     const engine = new AsteroidsEngine(
       canvas,
       (stats) => onStats(toGameStats(stats)),

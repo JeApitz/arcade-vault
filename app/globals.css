@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/*
+ * Escala canónica de breakpoints (mobile-porter).
+ * Todo @media NUEVO debe usar solo estos 4 valores.
+ * Breakpoints ad-hoc existentes (480/520/600/720/820/840/900/980/1100) se
+ * migran únicamente dentro de la ruta que se esté trabajando esa corrida,
+ * nunca en una pasada masiva. Ver references/mobile-readiness.md.
+ * --bp-sm: 480px · --bp-md: 720px · --bp-lg: 900px · --bp-xl: 1100px
+ */
+
 /* ===== ARCADE VAULT — theme ===== */
 :root {
   --bg: #0a0a0f;
@@ -19,6 +28,33 @@
   --line-2: rgba(255, 255, 255, 0.06);
   --pixel: var(--font-press-start-2p), system-ui, monospace;
   --mono: var(--font-jetbrains-mono), "Courier Prime", "Courier New", monospace;
+
+  --bp-sm: 480px;
+  --bp-md: 720px;
+  --bp-lg: 900px;
+  --bp-xl: 1100px;
+
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+}
+
+/* ===== prefers-reduced-motion (mobile-porter, M10) =====
+ * Detiene/acorta toda animación y transición infinita del sitio
+ * (gridscroll, flicker, pulse, blink, bob, drift, spinpix, bounce,
+ * float, pulse-led, pxblink, etc.) sin desactivar animaciones finitas
+ * de una sola pasada (rise, tickin, fadeIn, slideIn, shake).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 * {
@@ -275,9 +311,16 @@ a {
   display: none;
 }
 
+/* Breakpoint ad-hoc 840px migrado a la escala canónica --bp-md (720px)
+   se mantiene aparte porque el nav necesita colapsar antes que el resto
+   del sitio (logo + acciones no caben ya a 840px); ver
+   references/mobile-readiness.md. */
 @media (max-width: 840px) {
   .av-nav {
     padding: 12px 16px;
+    padding-top: max(12px, var(--safe-t));
+    padding-left: max(16px, var(--safe-l));
+    padding-right: max(16px, var(--safe-r));
   }
   .av-nav .links {
     display: none;
@@ -285,8 +328,23 @@ a {
   .av-nav .coin-counter {
     display: none;
   }
+  /* M7: el botón "Iniciar Sesión" también vive en el panel móvil; se
+     oculta aquí para no duplicar el control visible. También retira el
+     ancho que provocaba desborde horizontal del nav (M1) a 320–390px. */
+  .av-nav .auth-btn {
+    display: none;
+  }
   .av-nav .hamburger {
     display: inline-flex;
+  }
+}
+
+/* M3: tap target ≥44px efectivos bajo pointer:coarse (el hamburger usa
+   el padding compartido de .btn, que se queda corto). */
+@media (hover: none) and (pointer: coarse) {
+  .av-nav .hamburger {
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
@@ -298,6 +356,9 @@ a {
   border-left: 1px solid var(--line);
   z-index: 60;
   padding: 24px 20px;
+  padding-top: max(24px, var(--safe-t));
+  padding-right: max(20px, var(--safe-r));
+  padding-bottom: max(24px, var(--safe-b));
   transform: translateX(100%);
   transition: transform 220ms ease;
   display: flex;
@@ -313,6 +374,9 @@ a {
   font-size: 11px;
   color: var(--ink-dim);
   border-bottom: 1px dashed var(--line-2);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
 }
 .av-mobile-panel a.active {
   color: var(--cyan);
@@ -329,6 +393,29 @@ a {
 .av-mobile-backdrop.open {
   opacity: 1;
   pointer-events: auto;
+}
+
+/* ===== footer ===== */
+.av-footer {
+  border-top: 1px solid var(--line);
+  padding: 20px 32px;
+  padding-bottom: max(20px, var(--safe-b));
+  padding-left: max(32px, var(--safe-l));
+  padding-right: max(32px, var(--safe-r));
+  text-align: center;
+  color: var(--ink-faint);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+}
+@media (max-width: 480px) {
+  .av-footer {
+    padding: 16px;
+    padding-bottom: max(16px, var(--safe-b));
+    padding-left: max(16px, var(--safe-l));
+    padding-right: max(16px, var(--safe-r));
+    letter-spacing: 0.08em;
+  }
 }
 
 /* ===== generic neon button ===== */
@@ -525,7 +612,7 @@ a {
 .chip {
   padding: 12px 14px;
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px; /* mobile-porter (M4): piso de legibilidad --pixel, era 9px */
   letter-spacing: 0.12em;
   background: var(--bg-2);
   border: 1px solid var(--line);
@@ -539,6 +626,18 @@ a {
 }
 .chip:hover:not(.active) {
   color: var(--ink);
+}
+/* mobile-porter (M3): .chip es un <button> real (filtro de categoría en
+ * /games, tabs en /salon), no un enlace decorativo — necesita tap target
+ * de 44px efectivo en pointer:coarse. Se generaliza aquí en vez de en
+ * .hall-tabs .chip (scoped por la corrida `salon`) ahora que esta corrida
+ * ya cubre la ruta dueña de la clase (`games`, ver mapa Fase 4). */
+@media (hover: none) and (pointer: coarse) {
+  .chip {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 /* ===== grid + cards ===== */
@@ -598,7 +697,7 @@ a {
   left: 8px;
   bottom: 8px;
   font-family: var(--pixel);
-  font-size: 8px;
+  font-size: 10px; /* mobile-porter (M4): piso --pixel, era 8px */
   padding: 4px 6px;
   background: rgba(0, 0, 0, 0.6);
   color: var(--cyan);
@@ -633,7 +732,7 @@ a {
   display: flex;
   flex-direction: column;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px; /* mobile-porter (M4): piso --mono, era 10px */
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -951,7 +1050,7 @@ a {
 }
 .detail-tags span {
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px; /* mobile-porter M4: piso de 10px para --pixel, era 9px */
   letter-spacing: 0.12em;
   padding: 6px 10px;
   border: 1px solid var(--line);
@@ -977,7 +1076,7 @@ a {
 }
 .stat-strip .l {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px; /* mobile-porter M4: piso de 12px para --mono, era 10px */
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -1027,12 +1126,31 @@ a {
 }
 .lb-row .pl {
   color: var(--ink);
+  min-width: 0; /* mobile-porter M2: evita que el track 1fr crezca al min-content del nombre */
+}
+.lb-row .pl-name {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .lb-row .sc {
   text-align: right;
   font-family: var(--pixel);
   font-size: 12px;
   color: var(--cyan);
+}
+/* mobile-porter (M2, ruta `detalle`): a 320px, `.lb-row` con
+ * `grid-template-columns: 36px 1fr 110px` deja ~90px al nombre del
+ * jugador (288 padding-16 - 32 padding fila - 20 gap - 146 fijos). Se
+ * angostan RANGO/PUNTUACIÓN a ≤480px para devolverle espacio real al
+ * nombre en vez de depender solo de la elipsis. */
+@media (max-width: 480px) {
+  .lb-row {
+    grid-template-columns: 28px 1fr 80px;
+    gap: 8px;
+    padding: 8px 10px;
+  }
 }
 .lb-row.top1 .rk,
 .lb-row.top1 .sc {
@@ -1108,11 +1226,23 @@ a {
 }
 .hud-skins .btn {
   padding: 8px 12px;
-  font-size: 9px;
+  /* mobile-porter (M4): piso de 10px (era 9px). */
+  font-size: 10px;
 }
 .hud-actions {
   display: flex;
   gap: 10px;
+}
+/* mobile-porter (M3): .hud-skins .btn hereda `.btn` (padding:12px 20px,
+ * font-size:10px ⇒ ~38px de alto), y aquí se recorta más el padding
+ * (8px 12px ⇒ ~30px), por debajo del piso de 44px bajo pointer:coarse. */
+@media (hover: none) and (pointer: coarse) {
+  .hud-skins .btn,
+  .hud-actions .btn,
+  .modal .actions .btn,
+  .modal .input-row .btn {
+    min-height: 44px;
+  }
 }
 
 .crt {
@@ -1137,7 +1267,9 @@ a {
   position: relative;
   margin: 0 auto;
   aspect-ratio: var(--crt-aspect, 4 / 3);
+  /* mobile-porter (M5): dvh con fallback vh inmediato anterior. */
   max-height: 78vh;
+  max-height: 78dvh;
   background: #000;
   border-radius: 12px / 28px;
   overflow: hidden;
@@ -1178,7 +1310,8 @@ a {
   margin-top: 14px;
   padding: 0 8px;
   font-family: var(--pixel);
-  font-size: 8px;
+  /* mobile-porter (M4): piso de 10px para texto --pixel (era 8px). */
+  font-size: 10px;
   color: var(--ink-faint);
   letter-spacing: 0.16em;
 }
@@ -1198,10 +1331,18 @@ a {
 .touch-controls {
   display: none;
   margin-top: 14px;
-  padding: 0 8px;
+  padding: 0 8px max(0px, var(--safe-b));
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  /* mobile-porter (M1/M8): a 320-390px, asteroides/tetris tienen botones de
+   * acción con etiquetas largas ("▲ IMPULSO", "⟳ ROTAR") que no caben en una
+   * sola fila junto al d-pad (ver aritmética en references/mobile-readiness.md);
+   * se permite envolver en 2 filas en vez de desbordar el viewport. `.crt` no
+   * tiene altura fija, así que el `overflow:hidden` de esa regla no recorta
+   * la fila extra. */
+  flex-wrap: wrap;
+  row-gap: 10px;
 }
 @media (hover: none) and (pointer: coarse) {
   .touch-controls {
@@ -1212,11 +1353,13 @@ a {
 .touch-controls .actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 .touch-controls .touch-hint {
   margin: 0 auto;
   font-family: var(--pixel);
-  font-size: 9px;
+  /* mobile-porter (M4): piso de 10px (era 9px). */
+  font-size: 10px;
   letter-spacing: 0.14em;
   color: var(--ink-dim);
   text-align: center;
@@ -1230,7 +1373,8 @@ a {
   min-height: 52px;
   padding: 8px 12px;
   font-family: var(--pixel);
-  font-size: 9px;
+  /* mobile-porter (M4): piso de 10px (era 9px). */
+  font-size: 10px;
   letter-spacing: 0.08em;
   background: transparent;
   color: var(--ink);
@@ -1421,7 +1565,9 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  /* mobile-porter (M6): backdrop fixed a pantalla completa, respeta notches. */
+  padding: max(20px, var(--safe-t)) max(20px, var(--safe-r)) max(20px, var(--safe-b))
+    max(20px, var(--safe-l));
 }
 .modal {
   width: min(480px, 96vw);
@@ -1569,12 +1715,19 @@ a {
 .auth-tabs button {
   padding: 12px;
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px;
   letter-spacing: 0.14em;
   background: transparent;
   border: 0;
   color: var(--ink-dim);
   cursor: pointer;
+}
+/* mobile-porter (M3): altura efectiva base (~36.6px con padding:12px +
+ * font-size:10px) queda bajo el piso de 44px en pointer:coarse. */
+@media (hover: none) and (pointer: coarse) {
+  .auth-tabs button {
+    min-height: 44px;
+  }
 }
 .auth-tabs button.on {
   background: rgba(0, 245, 255, 0.08);
@@ -1587,9 +1740,14 @@ a {
   gap: 6px;
   margin-bottom: 12px;
 }
+/* mobile-porter (M4): 10px --mono estaba bajo el piso de 12px de lectura
+ * corrida; se generaliza aquí (regla global, `auth` es la ruta dueña de
+ * `.field` per el mapa Fase 4) — resuelve también el override scoped que
+ * había dejado `about` en `.contact-form .field label` (ahora redundante,
+ * pero se deja documentado en su lugar en vez de retirarlo a ciegas). */
 .field label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px;
   color: var(--ink-faint);
   text-transform: uppercase;
   letter-spacing: 0.16em;
@@ -1615,7 +1773,7 @@ a {
   gap: 12px;
   margin: 16px 0;
   font-family: var(--pixel);
-  font-size: 8px;
+  font-size: 10px;
   color: var(--ink-faint);
   letter-spacing: 0.16em;
 }
@@ -1633,7 +1791,24 @@ a {
 }
 .social .btn {
   padding: 12px;
-  font-size: 9px;
+  font-size: 10px;
+}
+/* mobile-porter (M3): padding:12px + font-size:10px ≈ 36.6px de alto
+ * efectivo, bajo el piso de 44px en pointer:coarse. */
+@media (hover: none) and (pointer: coarse) {
+  .social .btn {
+    min-height: 44px;
+  }
+}
+/* mobile-porter (M3): `.btn.ghost` sin `.lg`/`.xl` (usado por "JUGAR COMO
+ * INVITADO") hereda el padding/font-size base de `.btn` (~38px de alto
+ * efectivo). Scoped a `.auth-card` en vez de tocar `.btn.ghost` global,
+ * compartido por rutas aun sin trabajar por mobile-porter (mismo criterio
+ * que usó `about` con `.about-contact .btn.ghost`). */
+@media (hover: none) and (pointer: coarse) {
+  .auth-card .btn.ghost {
+    min-height: 44px;
+  }
 }
 
 /* ===== salón ===== */
@@ -1670,6 +1845,11 @@ a {
   justify-content: center;
   margin-bottom: 22px;
 }
+/* mobile-porter: el override que vivía aquí (font-size 10px + tap target
+ * 44px, scoped a .hall-tabs para no adelantar la ruta `games`) se retiró
+ * en la corrida `games` (2026-08-24): el `.chip` global (app/globals.css
+ * ~":612") ya cubre ambos pisos (M3/M4) para todos sus usos, incluido
+ * `.hall-tabs`. Ver ### games en references/mobile-readiness.md. */
 .podium {
   display: grid;
   grid-template-columns: 1fr 1.2fr 1fr;
@@ -1728,7 +1908,7 @@ a {
 }
 .podium-slot .date {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-faint);
   margin-top: 6px;
   letter-spacing: 0.12em;
@@ -1747,6 +1927,16 @@ a {
   font-family: var(--mono);
   font-size: 13px;
   gap: 10px;
+}
+/* mobile-porter (M2): celdas 1fr de texto no deben forzar el track por
+ * encima de su fracción asignada; sin esto, un nombre largo o "PUNTUACIÓN"
+ * bajo letter-spacing puede exceder el ancho de columna calculado. */
+.hall-table .th > div,
+.hall-table .tr > div {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .hall-table .th {
   font-family: var(--pixel);
@@ -1800,7 +1990,7 @@ a {
   grid-template-columns: 1fr;
   padding: 8px 18px;
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px;
   color: var(--yellow);
   letter-spacing: 0.16em;
   background: rgba(245, 255, 0, 0.04);
@@ -1877,13 +2067,29 @@ a {
   }
 }
 
+/* mobile-porter (M1/M2, ruta `salon`): a 320px de viewport, la fila de
+ * `.hall-table` con `grid-template-columns: 50px 1fr 90px 90px` (regla
+ * de 720px de arriba) deja solo ~2px al track 1fr de JUGADOR una vez
+ * restados padding (24px) + gap (30px) + columnas fijas (230px) de los
+ * 262px disponibles. Se reduce padding/gap y se angostan RANGO/FECHA
+ * para devolverle espacio real al nombre en vez de solo evitar overflow
+ * con la elipsis (ver ":1858" `.hall-table .th > div, .tr > div`). */
+@media (max-width: 480px) {
+  .hall-table .th,
+  .hall-table .tr {
+    grid-template-columns: 34px 1fr 70px 60px;
+    gap: 6px;
+    padding: 8px 8px;
+  }
+}
+
 @media (max-width: 480px) {
   .crt {
     padding: 8px;
   }
-  .crt-bottom {
-    font-size: 7px;
-  }
+  /* mobile-porter (M4): ya no se reduce a 7px (bajo el piso de 10px de
+   * --pixel); se oculta el span del medio (título del juego) en vez de
+   * encoger el texto para que quepa en 320px (ver .crt-bottom base). */
   .crt-bottom span:nth-child(2) {
     display: none;
   }
@@ -1895,6 +2101,55 @@ a {
   }
   .modal .input-row .btn {
     width: 100%;
+  }
+}
+
+/* mobile-porter (M8): landscape móvil bajo (celular acostado, altura chica
+ * por la barra de navegación del navegador). `.crt-screen` con
+ * `max-height: 78vh` deja apenas ~330px de juego en un iPhone SE acostado
+ * (375x667 → viewport landscape ~667x375 menos UI del navegador ≈ 320-350px
+ * de alto) y el resto del layout (hud + crt-bottom + touch-controls) ya no
+ * cabe debajo sin scroll. Se compacta el HUD a una sola fila angosta, se
+ * reduce el techo del crt-screen y se ajustan los paddings para que el
+ * juego + los controles táctiles quepan sin empujar nada fuera de pantalla. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .av-player {
+    margin: 8px auto;
+    padding: 0 12px 12px;
+  }
+  .player-hud {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px 12px;
+    gap: 8px 16px;
+    margin-bottom: 8px;
+  }
+  .player-hud > div:first-child {
+    display: flex;
+    gap: 16px;
+  }
+  .hud-stat .v {
+    font-size: 12px;
+  }
+  .hud-skins .l {
+    display: none;
+  }
+  .hud-actions {
+    gap: 6px;
+  }
+  .crt {
+    padding: 6px;
+    border-radius: 14px;
+  }
+  .crt-screen {
+    max-height: 60vh;
+    max-height: 60dvh;
+  }
+  .crt-bottom {
+    margin-top: 6px;
+  }
+  .touch-controls {
+    margin-top: 6px;
   }
 }
 
@@ -1966,7 +2221,10 @@ a {
 
 .home-hero {
   position: relative;
+  /* mobile-porter (M5): fallback en vh inmediatamente antes de la
+   * declaración en dvh, para navegadores sin soporte de unidades dinámicas. */
   min-height: calc(100vh - 60px);
+  min-height: calc(100dvh - 60px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2032,7 +2290,7 @@ a {
   bottom: -20px;
   transform: translateX(-50%);
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px; /* mobile-porter (M4): piso de 10px en --pixel, era 9px */
   letter-spacing: 0.2em;
   color: var(--ink-faint);
   display: flex;
@@ -2264,7 +2522,7 @@ a {
 }
 .mini-cat {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 12px; /* mobile-porter (M4): piso de 12px en --mono, era 10px */
   color: var(--ink-faint);
   letter-spacing: 0.14em;
   margin-top: 4px;
@@ -2328,7 +2586,7 @@ a {
 }
 .stat-s {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px; /* mobile-porter (M4): piso de 12px en --mono, era 11px */
   color: var(--ink-faint);
   letter-spacing: 0.16em;
   margin-top: 8px;
@@ -2437,7 +2695,7 @@ a {
   background: rgba(0, 255, 136, 0.08);
   border: 1px solid rgba(0, 255, 136, 0.35);
   font-family: var(--pixel);
-  font-size: 8px;
+  font-size: 10px; /* mobile-porter (M4): piso de 10px en --pixel, era 8px; clase sin uso actual en home-content.tsx, corregida por consistencia del bloque CSS de la ruta */
   letter-spacing: 0.14em;
   color: var(--green);
   white-space: nowrap;
@@ -2466,7 +2724,7 @@ a {
   border: 1px solid var(--line);
   padding: 6px 10px;
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px; /* mobile-porter (M4): piso de 10px en --pixel, era 9px */
   letter-spacing: 0.14em;
   color: var(--ink-dim);
   cursor: pointer;
@@ -2475,6 +2733,15 @@ a {
   color: var(--magenta);
   border-color: var(--magenta);
   box-shadow: 0 0 8px rgba(255, 0, 110, 0.35);
+}
+/* mobile-porter (M3): .lb-link es un <Link> real ("VER SALÓN →"), no
+ * decorativo; el padding original (6px) se queda muy corto en pointer:coarse. */
+@media (hover: none) and (pointer: coarse) {
+  .lb-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
 }
 
 .ticker {
@@ -2508,6 +2775,12 @@ a {
   font-family: var(--pixel);
   font-size: 10px;
   letter-spacing: 0.06em;
+  /* mobile-porter (M2): celda 1fr de .tick-row; sin esto un nombre de
+   * jugador largo fuerza el track por encima del espacio disponible. */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .tk-mid {
   color: var(--ink-dim);
@@ -2520,7 +2793,7 @@ a {
   text-shadow: 0 0 6px rgba(245, 255, 0, 0.5);
 }
 .tk-t {
-  font-size: 11px;
+  font-size: 12px; /* mobile-porter (M4): piso de 12px en --mono (heredado de .tick-row), era 11px */
   color: var(--ink-faint);
   letter-spacing: 0.08em;
 }
@@ -2543,7 +2816,11 @@ a {
 }
 .top-row {
   display: grid;
-  grid-template-columns: 36px 1fr auto auto;
+  /* mobile-porter (M2): la 2ª columna (1fr) corresponde a .tp-bar, que es
+   * `position:absolute` y no consume espacio real de grid; la columna que
+   * de verdad necesita ser flexible es la de .tp-p (nombre de jugador,
+   * 3ª posición), así que el track 1fr se movió ahí. Era `36px 1fr auto auto`. */
+  grid-template-columns: 36px auto 1fr auto;
   gap: 10px;
   align-items: center;
   padding: 8px 0;
@@ -2557,6 +2834,12 @@ a {
 .tp-p {
   font-family: var(--pixel);
   font-size: 11px;
+  /* mobile-porter (M2): ahora en el track 1fr; sin esto un nombre largo
+   * fuerza el ancho de la fila por encima del espacio disponible. */
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   letter-spacing: 0.06em;
   color: var(--ink);
 }
@@ -2644,7 +2927,7 @@ a {
   pointer-events: none;
 }
 .pc-label {
-  font-size: 9px;
+  font-size: 10px; /* mobile-porter (M4): piso de 10px en --pixel (clase .pixel), era 9px */
   letter-spacing: 0.22em;
   color: var(--ink-dim);
 }
@@ -2678,7 +2961,7 @@ a {
 }
 .pc-tag {
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px; /* mobile-porter (M4): piso de 10px en --pixel, era 9px */
   letter-spacing: 0.18em;
   color: var(--yellow);
   text-shadow: 0 0 6px rgba(245, 255, 0, 0.45);
@@ -2703,7 +2986,7 @@ a {
 .pc-foot {
   text-align: center;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 12px; /* mobile-porter (M4): piso de 12px en --mono, era 11px */
   color: var(--ink-faint);
   letter-spacing: 0.1em;
   margin-top: 4px;
@@ -2870,6 +3153,20 @@ a {
   box-shadow: 0 0 6px var(--cyan);
   animation: pxblink 2.4s steps(2) infinite;
 }
+/* M1: 24 spans a 6px + 23 gaps de 4px = 236px, más 2x16px de gap de
+ * `.about-divider` a cada lado = 268px mínimo (los `.div-bar` flex:1
+ * pueden encoger hasta 0). Eso ya excede los 256px de contenido
+ * disponibles a 320px (`.about-divider` padding:0 32px), forzando
+ * desborde horizontal real. Se reduce tamaño/gap bajo --bp-sm. */
+@media (max-width: 480px) {
+  .div-pixels {
+    gap: 3px;
+  }
+  .div-pixels span {
+    width: 4px;
+    height: 4px;
+  }
+}
 .div-pixels span:nth-child(3n) {
   background: var(--magenta);
   box-shadow: 0 0 6px var(--magenta);
@@ -2930,7 +3227,7 @@ a {
   align-items: center;
   gap: 10px;
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px;
   color: var(--ink-dim);
   letter-spacing: 0.14em;
 }
@@ -2985,6 +3282,11 @@ a {
     transform: translateX(4px);
   }
 }
+/* mobile-porter: override ahora redundante — la corrida `auth`
+ * (2026-08-24) generalizó `.field label` a 12px --mono globalmente
+ * (`app/globals.css:1736`), que es la ruta dueña de `.field` per el
+ * mapa Fase 4. Se deja el selector vacío-de-efecto retirado para no
+ * dejar CSS muerto. */
 .contact-form textarea {
   background: var(--bg);
   border: 1px solid var(--line);
@@ -3006,6 +3308,16 @@ a {
 .contact-form textarea::placeholder,
 .contact-form input::placeholder {
   color: var(--ink-faint);
+}
+/* `.btn.ghost` sin `.lg`/`.xl` hereda el padding/font-size base de `.btn`
+ * (~38px de alto efectivo), bajo el piso de 44px de M3. Scoped a
+ * `.about-contact` (REINTENTAR / ENVIAR OTRO MENSAJE) en vez de tocar
+ * `.btn.ghost` global, que se usa en rutas aun sin trabajar por
+ * mobile-porter. */
+@media (hover: none) and (pointer: coarse) {
+  .about-contact .btn.ghost {
+    min-height: 44px;
+  }
 }
 
 .btn.press:active {
@@ -3045,7 +3357,7 @@ a {
 .term-bar .term-title {
   margin-left: 8px;
   font-family: var(--pixel);
-  font-size: 9px;
+  font-size: 10px;
   color: var(--ink-faint);
   letter-spacing: 0.14em;
 }

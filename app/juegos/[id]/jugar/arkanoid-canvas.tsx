@@ -29,6 +29,17 @@ const ArkanoidCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function Ar
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    // mobile-porter (M9): ver nota equivalente en asteroids-canvas.tsx. La
+    // conversión de coordenadas de puntero/touch en arkanoid-engine.ts pasó
+    // de `this.canvas.width` (ahora físico, con dpr) a la constante lógica
+    // CANVAS_W/CANVAS_H para no desalinear el paddle con el cursor.
+    const dpr = window.devicePixelRatio || 1;
+    const cssWidth = 800;
+    const cssHeight = 600;
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    canvas.getContext("2d")?.scale(dpr, dpr);
+
     const engine = new ArkanoidEngine(
       canvas,
       (stats) => onStats(toGameStats(stats)),

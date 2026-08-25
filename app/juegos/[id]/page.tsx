@@ -66,7 +66,7 @@ export default async function GameDetailPage(props: PageProps<"/juegos/[id]">) {
           {scores.length === 0 ? (
             <p
               className="mono"
-              style={{ fontSize: 11, color: "var(--ink-dim)", padding: "16px 0" }}
+              style={{ fontSize: 12, color: "var(--ink-dim)", padding: "16px 0" }}
             >
               AÚN NO HAY PUNTUACIONES GUARDADAS_
             </p>
@@ -80,8 +80,8 @@ export default async function GameDetailPage(props: PageProps<"/juegos/[id]">) {
               >
                 <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
                 <div className="pl">
-                  {r.name}
-                  <div style={{ fontSize: 10, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
+                  <span className="pl-name">{r.name}</span>
+                  <div style={{ fontSize: 12, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
                     {r.date}
                   </div>
                 </div>

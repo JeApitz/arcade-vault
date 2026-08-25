@@ -141,7 +141,7 @@ export default function GamePlayer({ game }: { game: Game }) {
                 <div
                   className="mono"
                   style={{
-                    fontSize: 11,
+                    fontSize: 12,
                     color: "var(--ink-dim)",
                     marginTop: 10,
                     letterSpacing: "0.16em",

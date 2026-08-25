@@ -245,7 +245,9 @@ export class ArkanoidEngine {
 
   private handleMouseMove(e: MouseEvent) {
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = this.canvas.width / rect.width;
+    // mobile-porter (M9): usar CANVAS_W lógico, no this.canvas.width (backing
+    // store físico tras aplicar devicePixelRatio en el mount effect del canvas).
+    const scaleX = CANVAS_W / rect.width;
     const mouseX = (e.clientX - rect.left) * scaleX;
     this.paddle.x = Math.max(0, Math.min(CANVAS_W - this.paddle.w, mouseX - this.paddle.w / 2));
   }
@@ -253,8 +255,9 @@ export class ArkanoidEngine {
   private handleClick(e: MouseEvent) {
     if (!this.isPaused) return;
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = this.canvas.width / rect.width;
-    const scaleY = this.canvas.height / rect.height;
+    // mobile-porter (M9): usar CANVAS_W/CANVAS_H lógicos, ver nota en handleMouseMove.
+    const scaleX = CANVAS_W / rect.width;
+    const scaleY = CANVAS_H / rect.height;
     const mx = (e.clientX - rect.left) * scaleX;
     const my = (e.clientY - rect.top) * scaleY;
     for (let i = 0; i < 5; i++) {
@@ -278,7 +281,8 @@ export class ArkanoidEngine {
     const touch = e.touches[0];
     if (!touch) return;
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = this.canvas.width / rect.width;
+    // mobile-porter (M9): usar CANVAS_W lógico, ver nota en handleMouseMove.
+    const scaleX = CANVAS_W / rect.width;
     const touchX = (touch.clientX - rect.left) * scaleX;
     this.paddle.x = Math.max(0, Math.min(CANVAS_W - this.paddle.w, touchX - this.paddle.w / 2));
   }
@@ -289,8 +293,9 @@ export class ArkanoidEngine {
     const touch = e.touches[0];
     if (!touch) return;
     const rect = this.canvas.getBoundingClientRect();
-    const scaleX = this.canvas.width / rect.width;
-    const scaleY = this.canvas.height / rect.height;
+    // mobile-porter (M9): usar CANVAS_W/CANVAS_H lógicos, ver nota en handleMouseMove.
+    const scaleX = CANVAS_W / rect.width;
+    const scaleY = CANVAS_H / rect.height;
     const mx = (touch.clientX - rect.left) * scaleX;
     const my = (touch.clientY - rect.top) * scaleY;
     for (let i = 0; i < 5; i++) {

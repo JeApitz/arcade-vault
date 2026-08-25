@@ -1,6 +1,6 @@
 # 11 — Controles táctiles móviles
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Depende de:** SPEC 05, SPEC 08, SPEC 09, SPEC 10
 **Fecha:** 2026-08-24
 **Objetivo:** Agregar controles táctiles, visibles solo en dispositivos móviles/táctiles, a los cuatro juegos existentes (Asteroides, Tetris, Arkanoid, Snake) para que sean jugables por completo en pantallas táctiles, con un contrato reusable en `engines.ts` para que juegos futuros declaren sus propios controles sin rediseñar el sistema.

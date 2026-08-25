@@ -90,7 +90,7 @@ export default function HallOfFame({ games, initialTab }: { games: Game[]; initi
               <div className="podium-slot gold">
                 <div
                   className="pixel"
-                  style={{ fontSize: 9, color: "var(--gold)", letterSpacing: "0.18em" }}
+                  style={{ fontSize: 10, color: "var(--gold)", letterSpacing: "0.18em" }}
                 >
                   CAMPEÓN
                 </div>

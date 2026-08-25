@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+const MOBILE_PANEL_ID = "av-mobile-panel";
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
@@ -15,6 +17,24 @@ export default function Nav() {
   const isAcercaDe = pathname === "/about";
 
   const close = () => setOpen(false);
+
+  // M7: cierre con Escape + scroll lock del body mientras el panel está abierto.
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
 
   return (
     <>
@@ -49,8 +69,10 @@ export default function Nav() {
         </Link>
         <button
           className="btn ghost hamburger"
-          onClick={() => setOpen(true)}
+          onClick={() => setOpen((v) => !v)}
           aria-label="Menú"
+          aria-expanded={open}
+          aria-controls={MOBILE_PANEL_ID}
         >
           ≡
         </button>
@@ -59,8 +81,13 @@ export default function Nav() {
       <div
         className={"av-mobile-backdrop" + (open ? " open" : "")}
         onClick={close}
+        aria-hidden="true"
       ></div>
-      <aside className={"av-mobile-panel" + (open ? " open" : "")}>
+      <aside
+        id={MOBILE_PANEL_ID}
+        className={"av-mobile-panel" + (open ? " open" : "")}
+        inert={!open}
+      >
         <div className="pixel neon-cyan" style={{ fontSize: 11, marginBottom: 16 }}>
           MENÚ
         </div>
@@ -82,7 +109,7 @@ export default function Nav() {
         <div style={{ flex: 1 }}></div>
         <div
           className="pixel"
-          style={{ fontSize: 9, color: "var(--ink-faint)", letterSpacing: "0.16em" }}
+          style={{ fontSize: 10, color: "var(--ink-faint)", letterSpacing: "0.16em" }}
         >
           CRÉDITOS · 03
         </div>

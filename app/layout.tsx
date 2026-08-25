@@ -24,8 +24,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  viewportFit: "cover",
+  // mobile-porter (M11): alineado con theme_color/background_color de
+  // app/manifest.ts y con --bg (app/globals.css:14), no un color nuevo.
+  themeColor: "#0a0a0f",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -40,17 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <div id="root">
           <Nav />
           <main className="av-main">{children}</main>
-          <footer
-            style={{
-              borderTop: "1px solid var(--line)",
-              padding: "20px 32px",
-              textAlign: "center",
-              color: "var(--ink-faint)",
-              fontFamily: "var(--mono)",
-              fontSize: 11,
-              letterSpacing: "0.16em",
-            }}
-          >
+          <footer className="av-footer">
             © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
           </footer>
         </div>
