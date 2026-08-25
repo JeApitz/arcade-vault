@@ -7,6 +7,7 @@ import AsteroidsCanvas from "./asteroids-canvas";
 import TetrisCanvas from "./tetris-canvas";
 import ArkanoidCanvas from "./arkanoid-canvas";
 import SnakeCanvas from "./snake-canvas";
+import FroggerCanvas from "./frogger-canvas";
 import type { SkinId } from "./skins";
 
 export interface GameStats {
@@ -92,6 +93,21 @@ export const ENGINES: Record<string, GameEngineEntry> = {
     hudLabel: "LONGITUD",
     initialStats: { score: 0, secondary: 1, level: 1, status: "playing" },
     crtAspect: "1 / 1",
+    touchControls: {
+      mode: "buttons",
+      buttons: [
+        { key: "ArrowUp", label: "▲", area: "dpad" },
+        { key: "ArrowDown", label: "▼", area: "dpad" },
+        { key: "ArrowLeft", label: "◀", area: "dpad" },
+        { key: "ArrowRight", label: "▶", area: "dpad" },
+      ],
+    },
+  },
+  frogger: {
+    Canvas: FroggerCanvas,
+    hudLabel: "VIDAS",
+    initialStats: { score: 0, secondary: 3, level: 1, status: "playing" },
+    crtAspect: "8 / 7",
     touchControls: {
       mode: "buttons",
       buttons: [

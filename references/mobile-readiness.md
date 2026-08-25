@@ -5,17 +5,17 @@ Rúbrica fija: M1–M12 (ver definición completa en `.claude/agents/mobile-port
 
 ## Estado
 
-| Ruta    | M1  | M2  | M3  | M4  | M5  | M6  | M7  | M8  | M9  | M10 | M11 | M12 | Fecha      | Notas                             |
-| ------- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---------- | --------------------------------- |
-| home    | ✅  | ✅  | ✅  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### home`                    |
-| games   | ✅  | ✅  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### games`                   |
-| detalle | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### detalle`                 |
-| jugar   | ✅  | ⬛  | ✅  | ✅  | ✅  | ✅  | ⬛  | ✅  | ✅  | ✅  | ⬛  | ✅  | 2026-08-24 | ver `### jugar`                   |
-| salon   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### salon`                   |
-| about   | ✅  | ⬛  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### about`                   |
-| auth    | ✅  | ⬛  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### auth`                    |
-| chrome  | ✅  | ⬛  | ✅  | ✅  | ⬛  | ✅  | ✅  | ⬛  | ⬛  | ✅  | ⬛  | ✅  | 2026-08-24 | primera corrida, ver `### chrome` |
-| pwa     | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | 2026-08-24 | ver `### pwa`                     |
+| Ruta    | M1  | M2  | M3  | M4  | M5  | M6  | M7  | M8  | M9  | M10 | M11 | M12 | Fecha      | Notas                                |
+| ------- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---------- | ------------------------------------ |
+| home    | ✅  | ✅  | ✅  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### home`                       |
+| games   | ✅  | ✅  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### games`                      |
+| detalle | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-25 | ver `### detalle` (+ adenda frogger) |
+| jugar   | ✅  | ⬛  | ✅  | ✅  | ✅  | ✅  | ⬛  | ✅  | ✅  | ✅  | ⬛  | ✅  | 2026-08-25 | ver `### jugar` (+ adenda frogger)   |
+| salon   | ✅  | ✅  | ✅  | ✅  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### salon`                      |
+| about   | ✅  | ⬛  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### about`                      |
+| auth    | ✅  | ⬛  | ✅  | ✅  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | ⬛  | 2026-08-24 | ver `### auth`                       |
+| chrome  | ✅  | ⬛  | ✅  | ✅  | ⬛  | ✅  | ✅  | ⬛  | ⬛  | ✅  | ⬛  | ✅  | 2026-08-24 | primera corrida, ver `### chrome`    |
+| pwa     | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ⬛  | ✅  | ⬛  | 2026-08-24 | ver `### pwa`                        |
 
 Leyenda: ✅ cumple · 🟡 en curso · ⬜ pendiente · ⬛ n/a para esta ruta · ❌ bloqueado (anotar en Pendientes).
 
@@ -146,6 +146,15 @@ Leyenda: ✅ cumple · 🟡 en curso · ⬜ pendiente · ⬛ n/a para esta ruta 
 - El breakpoint `840px` del nav se dejó como ad-hoc (no se migró a `--bp-md: 720px`): el nav necesita colapsar antes que el resto del sitio porque logo + acciones no caben ya a 840px con el contenido actual; migrarlo a 720px encogería aún más el espacio disponible en el rango 721–840px. Documentado en el comentario junto al `@media` (`app/globals.css:274-277`).
 - `npm run lint` reporta errores preexistentes no relacionados (p. ej. `app/juegos/[id]/jugar/game-player.tsx:18` "setState en efecto", y varios en `references/templates/**`/`references/started-games/**`); confirmado con `git stash` que ya existían antes de esta corrida. Ningún archivo tocado por `chrome` introduce errores nuevos de lint.
 - **Sin verificación en navegador ni en dispositivo real.** Todo lo anterior es lectura de código + aritmética a mano; queda pendiente que alguien lo confirme visualmente.
+
+**Adenda 2026-08-25 (frogger):** re-auditoría de `jugar` tras el aterrizaje del motor `frogger` en `app/juegos/[id]/jugar/engines.ts:106-120` (d-pad de 4 botones sin action buttons, `crtAspect:"8 / 7"`, canvas lógico 640×560). Sin cambios de código — la implementación ya sigue los patrones que esta corrida había dejado establecidos:
+
+- **M1/M3 (touch-controls)** `app/juegos/[id]/jugar/engines.ts:111-119` define 4 botones dpad (`ArrowUp/Down/Left/Right`, sin `area:"action"`). En `app/juegos/[id]/jugar/touch-controls.tsx:100-103`, `isGamepad = dpadButtons.length>0 && actionButtons.length>0` da `false` (0 action buttons) igual que en `snake` (misma forma de config) — cae en el layout plano `.dpad{display:flex;gap:10px;flex-wrap:wrap}` (`app/globals.css:1397-1402`), no en `.dpad--cross`/`.touch-controls--gamepad` (SPEC 12, solo para juegos con d-pad+acciones como asteroides/tetris). Aritmética ya validada para esta forma exacta (4 botones `min-width:52px`, `gap:10px`, sin acciones) en la corrida `jugar` original: `52×4+3×10=238px` en una sola fila a 320px, contra `256px` disponibles (`.av-player` 16px + `.crt` 8px por lado a ≤480px) ⇒ cabe con ~18px de margen; se re-verifica igual para `frogger` por ser la misma config de botones que `snake`.
+- **M9 (nitidez de canvas)** `app/juegos/[id]/jugar/frogger-canvas.tsx:33-38` — ya implementa el fix DPR (`canvas.width/height = css×dpr` + `ctx.scale(dpr,dpr)`) siguiendo el patrón que esta corrida dejó en `asteroids-canvas.tsx`/`snake-canvas.tsx`/`arkanoid-canvas.tsx`. `frogger-engine.ts` no lee `canvas.width`/`canvas.height` en ningún punto (`grep` sin resultados) — usa las constantes lógicas `W`/`H` (640×560, `frogger-engine.ts:17-18`) para toda su lógica, y no hace mapeo de coordenadas de puntero (el d-pad no usa touch/drag sobre el canvas como sí hace `arkanoid`), así que no aplica el gotcha de `arkanoid-engine.ts` (no hay input de coordenadas que re-escalar).
+- **M8 (orientación, proporción 8/7)** `.crt-screen` (`app/globals.css:1290-1296`) sigue usando `aspect-ratio: var(--crt-aspect, 4/3)` + `max-height: 78vh/78dvh` (`60vh/60dvh` en landscape, `app/globals.css:2269-2272`) sin ancho explícito propio, salvo `margin:0 auto`. Este es el mecanismo estándar de "ratio box acotado por max-height" (los navegadores modernos aplican el ratio preferido a ambas dimensiones simultáneamente cuando `width`/`height` son ambos `auto` y hay un `max-height` — no es un `width:100%` fijo que luego se recorta). 8/7 (≈1.14, entre el 1/1 de `snake` y el 4/3 de `asteroides`/`arkanoid`) queda dentro del mismo rango ya cubierto por esa media query; no requiere una regla nueva.
+- **M4/M6** Sin hallazgos nuevos: los labels del d-pad de `frogger` (`▲`,`▼`,`◀`,`▶`) heredan `.touch-btn{font-size:10px}` (ya en el piso de M4) y `.touch-controls{padding:...max(0px,var(--safe-b))}` (M6), ambos ya corregidos de forma genérica en la corrida original.
+
+**Conclusión:** `frogger` cumple M1, M3, M4, M6, M9 por herencia directa de los fixes genéricos/ya auditados de `jugar` (mismo patrón que `snake` para el d-pad, mismo patrón que `asteroides`/`snake`/`arkanoid` para el DPR fix); M8 no requiere ajuste porque 8/7 cae dentro del rango de aspect-ratios ya validado por la media query landscape existente. No se tocó código en esta adenda — `git status`/`git diff --stat` sin cambios atribuibles a `mobile-porter` (los cambios ya presentes en el árbol de trabajo en `app/globals.css`/`engines.ts`/`references/game-with-themes.md` son de la implementación de `frogger` y su corrida de `skin-designer`, previas a esta adenda). **Sin verificación en navegador ni en dispositivo real** — en particular, no se pudo confirmar visualmente que el `aspect-ratio` de 8/7 efectivamente acota ambas dimensiones a la vez en runtime (solo se razonó desde el comportamiento estándar documentado de CSS Sizing 4); queda como pendiente de verificación visual junto con el resto de `jugar`.
 
 ### salon
 
@@ -319,6 +328,17 @@ Leyenda: ✅ cumple · 🟡 en curso · ⬜ pendiente · ⬛ n/a para esta ruta 
 - `.lb-link` está mapeada a `detalle` en la Fase 4 del agente pero pertenece a `home` (`app/home-content.tsx:374`) — ver segunda discrepancia anotada en Pendientes; no se tocó en esta corrida.
 - No se investigó por qué `.lb-row .rk`/`.sc` ya cumplían M4 (11px/12px `--pixel`) mientras `.detail-tags span` (9px) y `.stat-strip .l` (10px `--mono`) no — probablemente inconsistencia de implementación original, no un patrón intencional a preservar.
 - **Sin verificación en navegador ni en dispositivo real.** Todo lo anterior es lectura de código + aritmética a mano; queda pendiente que alguien lo confirme visualmente.
+
+**Adenda 2026-08-25 (frogger):** re-auditoría de `detalle` tras el aterrizaje del motor `frogger` en el catálogo (`ENGINES`, `app/juegos/[id]/jugar/engines.ts`) y su cover CSS `.cover-frogger` (`app/globals.css:931-953`, color de catálogo `lime`). Sin cambios de código — la cover de `frogger` reutiliza el mismo mecanismo genérico que ya usan `tetris`/`snake`/`arkanoid`/etc. en esta ruta, ya cubierto por los fixes de la corrida original:
+
+- **M1** `app/juegos/[id]/page.tsx:16-18` renderiza `<div className="detail-cover"><div className={"cover-bg " + game.cover}></div></div>`. `.detail-cover` (`app/globals.css:1053-1058`) es `position:relative; overflow:hidden; aspect-ratio:16/10`, sin ancho fijo (ocupa el 100% de su columna de `.av-detail`, que a ≤900px ya es `grid-template-columns:1fr`, sin cambios de esta corrida). `.cover-bg` (`app/globals.css:749-752`) es `position:absolute; inset:0` — su tamaño es siempre el de `.detail-cover`, nunca puede exceder el contenedor por definición de `inset:0`. `.cover-frogger`/`::after`/`::before` (`app/globals.css:931-953`) solo pintan `background`/`content` posicionados con porcentajes (`inset:0`, `10% 20%`, `left:50%; top:84%`) o backgrounds con `background-size` en px (`90px 12px`, `60px 10px`) que se recortan dentro de la caja por el `overflow:hidden` de `.detail-cover` sin generar scroll de página — mismo patrón exacto que `.cover-tetris`/`.cover-snake`/`.cover-arkanoid`, ya en producción en esta ruta antes de `frogger`. Sin desborde real, ni nuevo ni preexistente.
+- **M2** n/a, sin cambios: `frogger` no toca `.lb-row`/`.stat-strip`, los únicos grids de la ruta (ya fijados en la corrida original).
+- **M3** n/a, sin cambios: la cover es decorativa (`aria`-neutral, sin controles interactivos); `.detail-actions`/`.lb-row` no dependen del juego mostrado.
+- **M4** Sin hallazgo: `.cover-frogger::before { content: "◉"; font-size: 22px }` no es texto de lectura ni un label de UI (no hereda `.card .cover .label`, que solo existe en la ruta `games`, fuera de `detalle`); no hay ningún `--pixel`/`--mono` nuevo bajo el piso introducido por `frogger` en esta ruta. `{game.cat}` (texto de categoría de frogger) se renderiza dentro de `.detail-tags span` (ya en 10px `--pixel` desde la corrida original), sin `white-space:nowrap`, envuelve normalmente si es más largo.
+- **M5/M6** Sin hallazgo: `.detail-cover` no usa `vh`/`position:fixed|sticky`; sin cambios.
+- **M10** Sin hallazgo: ninguna de las 3 reglas de `.cover-frogger` declara `animation`; el resto de la ruta ya está cubierto por el bloque global `@media (prefers-reduced-motion: reduce)`.
+
+**Conclusión:** `frogger` cumple M1–M6/M10 en `detalle` por herencia directa del mecanismo genérico `.cover-bg`/`.detail-cover` ya auditado y corregido en la corrida original (M1: contenedor `overflow:hidden` + `inset:0` sin ancho fijo; M2/M3: sin superficie nueva; M4: sin texto nuevo bajo el piso; M5/M6/M10: sin `vh`/`fixed`/animación nuevos). No se tocó código en esta adenda — `git status`/`git diff --stat` sin cambios atribuibles a `mobile-porter` en `app/juegos/[id]/page.tsx` ni en los bloques de `detalle` de `app/globals.css` (los cambios ya presentes en el árbol de trabajo en `app/globals.css`/`engines.ts`/`app/data/games.ts`-equivalente en Supabase/`references/game-with-themes.md` son de la implementación de `frogger` y su corrida de `skin-designer`, previas a esta adenda). `npm run build` limpio (confirmado en esta corrida). **Sin verificación en navegador ni en dispositivo real** — en particular, no se pudo confirmar visualmente el recorte real de los backgrounds de `.cover-frogger` dentro del `aspect-ratio:16/10` de `.detail-cover`; queda como pendiente de verificación visual junto con el resto de `detalle`.
 
 ### about
 

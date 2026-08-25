@@ -20,6 +20,7 @@ There is no test runner configured yet.
 - Usa el agente `mobile-porter` (solo bajo petición explícita) para auditar y corregir una ruta del sitio en móvil (web y PWA instalable) contra su rúbrica fija M1–M12 (desborde, grids, tap targets, legibilidad, `dvh`, safe-area, nav accesible, orientación, nitidez de canvas, `prefers-reduced-motion`, PWA, zoom); trabaja una ruta por corrida (`mobile-porter <ruta>`), verifica por lectura de código (no navegador) y mantiene el estado en `references/mobile-readiness.md`, su memoria.
 - Antes de implementar un juego nuevo, revisa `references/implemented-games.md` para saber qué juegos ya están implementados (ID, título, categoría, descripción breve, color) y evitar duplicados.
 - Sigue usando /spec y /spec-impl (fernando-skills) para specs no relacionados a juegos.
+- Usa /spec-impl-game para implementar un spec de juego ya `Aprobado` (acepta specs planos `specs/NN-juego-<nombre>.md` y specs en carpeta `specs/<game-id>/NN-*.md` de `game-jam`). Al terminar la implementación con el build limpio, encadena automáticamente y en secuencia (nunca en paralelo) `skin-designer <game-id>` → `mobile-porter jugar` → `mobile-porter detalle`.
 
 ## Architecture
 
