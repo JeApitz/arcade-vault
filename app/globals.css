@@ -1581,13 +1581,13 @@ a {
 .tetris-container canvas {
   display: block;
 }
-.tetris-container canvas[width="300"] {
+.tetris-container canvas.tetris-board-canvas {
   border: 1px solid var(--tetris-border, #2a2a3a);
   background: var(--tetris-canvas-bg, #1a1a25);
   border-radius: 4px;
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.6);
 }
-.tetris-container canvas[width="120"] {
+.tetris-container canvas.tetris-next-canvas {
   border: 1px solid var(--tetris-border, #2a2a3a);
   background: var(--tetris-canvas-bg, #1a1a25);
   border-radius: 4px;
