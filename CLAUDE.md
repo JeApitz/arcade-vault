@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Arcade Vault — a platform to play games online and compete for the highest score (per README.md, in Spanish). Implemented: home, game catalog/detail pages, auth, about + contact form, a game player with playable games (Asteroids, Tetris, Arkanoid, Snake and more...), and a Supabase-backed leaderboard / hall of fame.
+Arcade Vault — a platform to play games online and compete for the highest score (per README.md, in Spanish). Implemented: home, game catalog/detail pages, auth, about + contact form, a game player with playable games (Asteroids, Tetris, Arkanoid, Snake, Frogger and more...), and a Supabase-backed leaderboard / hall of fame.
 
 There is no test runner configured yet.
 
@@ -14,14 +14,17 @@ There is no test runner configured yet.
 
 - Usa siempre /frontend-design para diseñar la interfaz de usuario.
 - Usa /spec-game para diseñar el spec de un juego nuevo antes de programarlo (motor, canvas, catálogo en Supabase, leaderboard). Pregunta antes de escribir.
-- Usa el agente `game-planner` (solo bajo petición explícita) para decidir qué juegos nuevos agregar; acepta un N (`game-planner 10`) y paraleliza en carriles temáticos, deduplicando contra `references/game-suggestions-todo.md`, que es su memoria. Su salida alimenta `/spec-game`.
-- Usa el agente `game-jam` (solo bajo petición explícita) para convertir un **tema** en un juego nuevo con tres specs escalonados en `specs/game-jam/<game-id>/` (núcleo jugable → contenido/progresión → identidad y pulido). No pregunta, no escribe código y deja los specs en `Borrador`; deduplica contra `references/implemented-games.md` y `references/game-suggestions-todo.md`, y registra el juego elegido en ese ToDo.
-- Usa el agente `skin-designer` (solo bajo petición explícita) para implementar los tres skins obligatorios de un juego (`clasico` default, `neon`, `retro`) con contraste verificado sobre el fondo oscuro fijo del sitio; trabaja un juego por corrida (`skin-designer <juego>`) y mantiene el estado en `references/game-with-themes.md`, su memoria.
-- Usa el agente `mobile-porter` (solo bajo petición explícita) para auditar y corregir una ruta del sitio en móvil (web y PWA instalable) contra su rúbrica fija M1–M12 (desborde, grids, tap targets, legibilidad, `dvh`, safe-area, nav accesible, orientación, nitidez de canvas, `prefers-reduced-motion`, PWA, zoom); trabaja una ruta por corrida (`mobile-porter <ruta>`), verifica por lectura de código (no navegador) y mantiene el estado en `references/mobile-readiness.md`, su memoria.
-- Usa el agente `game-performance-booster` (solo bajo petición explícita) para auditar y corregir el rendimiento y el encuadre de un juego contra su rúbrica fija P1–P10 (repintado en pausa, capa estática cacheada, DPR real + `ResizeObserver`, `resize()` en el motor, HUD sin superposición, encuadre a viewport, timing, allocs por frame, ciclo de vida); deriva de `specs/13-frogger-encuadre-hud-rendimiento.md`, trabaja un juego por corrida (`game-performance-booster <juego>`), verifica por lectura de código (no navegador) y mantiene el estado en `references/game-performance.md`, su memoria.
-- Antes de implementar un juego nuevo, revisa `references/implemented-games.md` para saber qué juegos ya están implementados (ID, título, categoría, descripción breve, color) y evitar duplicados.
 - Sigue usando /spec y /spec-impl (fernando-skills) para specs no relacionados a juegos.
 - Usa /spec-impl-game para implementar un spec de juego ya `Aprobado` (acepta specs planos `specs/NN-juego-<nombre>.md` y specs en carpeta `specs/<game-id>/NN-*.md` de `game-jam`). Al terminar la implementación con el build limpio, encadena automáticamente y en secuencia (nunca en paralelo) `skin-designer <game-id>` → `mobile-porter jugar` → `mobile-porter detalle`.
+- Antes de implementar un juego nuevo, revisa `references/implemented-games.md` para saber qué juegos ya están implementados (ID, título, categoría, descripción breve, color) y evitar duplicados.
+
+Agentes (todos solo bajo petición explícita por nombre):
+
+- `game-planner`: decide qué juego(s) nuevo(s) agregar (`game-planner N`); memoria en `references/game-suggestions-todo.md`. Alimenta `/spec-game`.
+- `game-jam`: convierte un tema en un juego nuevo con tres specs escalonados en `specs/game-jam/<game-id>/`; no escribe código.
+- `skin-designer`: implementa los tres skins obligatorios de un juego (`clasico`, `neon`, `retro`); un juego por corrida (`skin-designer <juego>`); memoria en `references/game-with-themes.md`.
+- `mobile-porter`: audita y corrige una ruta del sitio en móvil/PWA contra su rúbrica M1–M12; una ruta por corrida (`mobile-porter <ruta>`); memoria en `references/mobile-readiness.md`.
+- `game-performance-booster`: audita y corrige rendimiento y encuadre de canvas de un juego contra su rúbrica P1–P10; un juego por corrida (`game-performance-booster <juego>`); memoria en `references/game-performance.md`.
 
 ## Architecture
 
