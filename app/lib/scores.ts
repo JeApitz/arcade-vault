@@ -8,7 +8,7 @@ export async function getTopScores(gameId: string, limit = 12): Promise<ScoreRow
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("scores")
-    .select("player_name, score, created_at")
+    .select("player_name, score, created_at, user_id")
     .eq("game_id", gameId)
     .order("score", { ascending: false })
     .limit(limit);
@@ -18,6 +18,7 @@ export async function getTopScores(gameId: string, limit = 12): Promise<ScoreRow
     name: row.player_name,
     score: row.score,
     date: formatDate(row.created_at),
+    registered: row.user_id !== null,
   }));
 }
 
@@ -53,19 +54,19 @@ export async function getTopPlayers(limit = 5): Promise<TopPlayer[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("scores")
-    .select("player_name, score")
+    .select("player_name, score, user_id")
     .order("score", { ascending: false })
     .limit(100);
   if (error || !data) return [];
-  const best = new Map<string, number>();
+  const best = new Map<string, { playerName: string; score: number }>();
   for (const row of data) {
-    const current = best.get(row.player_name);
-    if (current === undefined || row.score > current) {
-      best.set(row.player_name, row.score);
+    const key = row.user_id ?? `guest:${row.player_name}`;
+    const current = best.get(key);
+    if (current === undefined || row.score > current.score) {
+      best.set(key, { playerName: row.player_name, score: row.score });
     }
   }
-  return Array.from(best.entries())
-    .map(([playerName, score]) => ({ playerName, score }))
+  return Array.from(best.values())
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }

@@ -6,6 +6,18 @@ import type { Game, ScoreRow } from "../data/games";
 import { createClient } from "../lib/supabase/client";
 import { formatDate } from "../lib/format";
 
+function RegisteredBadge() {
+  return (
+    <span
+      title="Cuenta registrada"
+      aria-label="Cuenta registrada"
+      style={{ color: "var(--gold)", marginLeft: 6, fontSize: "0.8em" }}
+    >
+      ◆
+    </span>
+  );
+}
+
 export default function HallOfFame({ games, initialTab }: { games: Game[]; initialTab?: string }) {
   const [tab, setTab] = useState(initialTab || games[0]?.id || "");
 
@@ -19,7 +31,7 @@ export default function HallOfFame({ games, initialTab }: { games: Game[]; initi
     const supabase = createClient();
     supabase
       .from("scores")
-      .select("player_name, score, created_at")
+      .select("player_name, score, created_at, user_id")
       .eq("game_id", tab)
       .order("score", { ascending: false })
       .limit(12)
@@ -34,6 +46,7 @@ export default function HallOfFame({ games, initialTab }: { games: Game[]; initi
           name: row.player_name,
           score: row.score,
           date: formatDate(row.created_at),
+          registered: row.user_id !== null,
         }));
         setRows(mapped);
         setState(mapped.length === 0 ? "empty" : mapped.length < 3 ? "few" : "ready");
@@ -83,7 +96,10 @@ export default function HallOfFame({ games, initialTab }: { games: Game[]; initi
             <div className="podium">
               <div className="podium-slot silver">
                 <div className="rank-num">02</div>
-                <div className="name">{rows[1].name}</div>
+                <div className="name">
+                  {rows[1].name}
+                  {rows[1].registered && <RegisteredBadge />}
+                </div>
                 <div className="score">{rows[1].score.toLocaleString("es-ES")}</div>
                 <div className="date">{rows[1].date}</div>
               </div>
@@ -97,7 +113,10 @@ export default function HallOfFame({ games, initialTab }: { games: Game[]; initi
                 <div className="rank-num" style={{ fontSize: 36, marginTop: 4 }}>
                   01
                 </div>
-                <div className="name">{rows[0].name}</div>
+                <div className="name">
+                  {rows[0].name}
+                  {rows[0].registered && <RegisteredBadge />}
+                </div>
                 <div className="score" style={{ fontSize: 20 }}>
                   {rows[0].score.toLocaleString("es-ES")}
                 </div>
@@ -105,7 +124,10 @@ export default function HallOfFame({ games, initialTab }: { games: Game[]; initi
               </div>
               <div className="podium-slot bronze">
                 <div className="rank-num">03</div>
-                <div className="name">{rows[2].name}</div>
+                <div className="name">
+                  {rows[2].name}
+                  {rows[2].registered && <RegisteredBadge />}
+                </div>
                 <div className="score">{rows[2].score.toLocaleString("es-ES")}</div>
                 <div className="date">{rows[2].date}</div>
               </div>
@@ -126,7 +148,10 @@ export default function HallOfFame({ games, initialTab }: { games: Game[]; initi
                 style={{ animationDelay: `${i * 50}ms` }}
               >
                 <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
-                <div className="pl">{r.name}</div>
+                <div className="pl">
+                  {r.name}
+                  {r.registered && <RegisteredBadge />}
+                </div>
                 <div className="sc">{r.score.toLocaleString("es-ES")}</div>
                 <div className="dt">{r.date}</div>
               </div>
