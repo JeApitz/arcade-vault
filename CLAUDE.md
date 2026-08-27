@@ -25,6 +25,7 @@ Agentes (todos solo bajo petición explícita por nombre):
 - `skin-designer`: implementa los tres skins obligatorios de un juego (`clasico`, `neon`, `retro`); un juego por corrida (`skin-designer <juego>`); memoria en `references/game-with-themes.md`.
 - `mobile-porter`: audita y corrige una ruta del sitio en móvil/PWA contra su rúbrica M1–M12; una ruta por corrida (`mobile-porter <ruta>`); memoria en `references/mobile-readiness.md`.
 - `game-performance-booster`: audita y corrige rendimiento y encuadre de canvas de un juego contra su rúbrica P1–P10; un juego por corrida (`game-performance-booster <juego>`); memoria en `references/game-performance.md`.
+- `security-auditor`: audita la seguridad de la base de datos Supabase y del código de la app contra la rúbrica S1–S12, en barrido completo por corrida (`security-auditor`, opcional `db`/`auth`/`app`). Solo reporta hallazgos y fixes propuestos, no corrige; memoria en `references/security/security-status.md`.
 
 ## Architecture
 

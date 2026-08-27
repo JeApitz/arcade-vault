@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/app/lib/supabase/client";
+import { isPasswordValid } from "@/app/lib/password";
+import { PasswordChecklist } from "./password-checklist";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -197,6 +199,8 @@ export default function AuthPage() {
             />
           </div>
 
+          {tab === "up" && <PasswordChecklist password={pass} />}
+
           {tab === "in" && (
             <button
               className="btn ghost"
@@ -234,7 +238,7 @@ export default function AuthPage() {
           <button
             className="btn lg"
             type="submit"
-            disabled={loading}
+            disabled={loading || (tab === "up" && !isPasswordValid(pass))}
             style={{ width: "100%", marginTop: 8 }}
           >
             {loading ? "PROCESANDO..." : tab === "in" ? "ENTRAR AL VAULT" : "CREAR Y JUGAR"}

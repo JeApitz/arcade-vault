@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/app/lib/supabase/client";
+import { isPasswordValid } from "@/app/lib/password";
+import { PasswordChecklist } from "../password-checklist";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -38,8 +40,8 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError(null);
 
-    if (pass.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres.");
+    if (!isPasswordValid(pass)) {
+      setError("La contraseña no cumple los requisitos de seguridad.");
       return;
     }
     if (pass !== confirmPass) {
@@ -122,6 +124,7 @@ export default function ResetPasswordPage() {
                 placeholder="••••••••"
               />
             </div>
+            <PasswordChecklist password={pass} />
             <div className="field">
               <label>Confirmar contraseña</label>
               <input
@@ -144,7 +147,7 @@ export default function ResetPasswordPage() {
             <button
               className="btn lg"
               type="submit"
-              disabled={loading}
+              disabled={loading || !isPasswordValid(pass)}
               style={{ width: "100%", marginTop: 8 }}
             >
               {loading ? "GUARDANDO..." : "GUARDAR CONTRASEÑA"}
