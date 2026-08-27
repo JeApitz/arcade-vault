@@ -143,6 +143,7 @@ export interface ScoreRow {
   name: string;
   score: number;
   date: string;
+  registered?: boolean;
 }
 
 export function seededScores(seed: number, count = 12): ScoreRow[] {

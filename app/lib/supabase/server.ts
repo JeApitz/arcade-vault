@@ -18,8 +18,8 @@ export async function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Se llama desde un Server Component; se ignora porque un
-            // middleware se encargará de refrescar la sesión (spec futuro).
+            // Se llama desde un Server Component; se ignora porque
+            // proxy.ts refresca la sesión en cada request.
           }
         },
       },

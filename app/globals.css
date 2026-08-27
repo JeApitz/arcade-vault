@@ -313,6 +313,28 @@ a {
 .av-nav .hamburger {
   display: none;
 }
+.av-nav-session {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 16px;
+}
+.av-nav-username {
+  font-size: 12px;
+  color: var(--ink-dim);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.av-nav-session--mobile {
+  padding: 14px 12px;
+  border-bottom: 1px dashed var(--line-2);
+}
+.av-nav-session--mobile .av-nav-username {
+  max-width: none;
+  font-size: 13px;
+}
 
 /* Breakpoint ad-hoc 840px migrado a la escala canónica --bp-md (720px)
    se mantiene aparte porque el nav necesita colapsar antes que el resto
@@ -336,6 +358,9 @@ a {
      oculta aquí para no duplicar el control visible. También retira el
      ancho que provocaba desborde horizontal del nav (M1) a 320–390px. */
   .av-nav .auth-btn {
+    display: none;
+  }
+  .av-nav > .av-nav-session {
     display: none;
   }
   .av-nav .hamburger {
@@ -384,6 +409,10 @@ a {
 }
 .av-mobile-panel a.active {
   color: var(--cyan);
+}
+.av-mobile-panel > button {
+  margin-top: 4px;
+  min-height: 44px;
 }
 .av-mobile-backdrop {
   position: fixed;

@@ -2,13 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
+
+import { createClient } from "@/app/lib/supabase/client";
+import UserAvatar, { getDisplayName } from "@/app/components/user-avatar";
 
 const MOBILE_PANEL_ID = "av-mobile-panel";
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+  const [user, setUser] = useState<User | null>(null);
 
   const isInicio = pathname === "/";
   const isBiblioteca = pathname === "/games" || pathname.startsWith("/juegos/");
@@ -17,6 +24,27 @@ export default function Nav() {
   const isAcercaDe = pathname === "/about";
 
   const close = () => setOpen(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  const logout = async () => {
+    close();
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/");
+  };
 
   // M7: cierre con Escape + scroll lock del body mientras el panel está abierto.
   useEffect(() => {
@@ -64,9 +92,19 @@ export default function Nav() {
           <span className="coin"></span>
           <span>CRÉDITOS · 03</span>
         </div>
-        <Link href="/auth" className="btn auth-btn">
-          Iniciar Sesión
-        </Link>
+        {user ? (
+          <div className="av-nav-session">
+            <UserAvatar user={user} size={28} />
+            <span className="av-nav-username mono">{getDisplayName(user)}</span>
+            <button className="btn ghost auth-btn" type="button" onClick={logout}>
+              Cerrar sesión
+            </button>
+          </div>
+        ) : (
+          <Link href="/auth" className="btn auth-btn">
+            Iniciar Sesión
+          </Link>
+        )}
         <button
           className="btn ghost hamburger"
           onClick={() => setOpen((v) => !v)}
@@ -103,9 +141,21 @@ export default function Nav() {
         <Link href="/about" className={isAcercaDe ? "active" : ""} onClick={close}>
           Acerca de
         </Link>
-        <Link href="/auth" className={isAuth ? "active" : ""} onClick={close}>
-          Iniciar Sesión
-        </Link>
+        {user ? (
+          <>
+            <div className="av-nav-session av-nav-session--mobile">
+              <UserAvatar user={user} size={28} />
+              <span className="av-nav-username mono">{getDisplayName(user)}</span>
+            </div>
+            <button className="btn ghost" type="button" onClick={logout}>
+              Cerrar sesión
+            </button>
+          </>
+        ) : (
+          <Link href="/auth" className={isAuth ? "active" : ""} onClick={close}>
+            Iniciar Sesión
+          </Link>
+        )}
         <div style={{ flex: 1 }}></div>
         <div
           className="pixel"

@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import type { Game } from "../../../data/games";
 import { createClient } from "../../../lib/supabase/client";
+import { getDisplayName } from "../../../components/user-avatar";
 import { ENGINES, type GameCanvasHandle, type GameStats } from "./engines";
 import { DEFAULT_SKIN, SKIN_IDS, SKIN_LABELS, readSkinId, writeSkinId, type SkinId } from "./skins";
 import TouchControls from "./touch-controls";
@@ -11,6 +13,7 @@ import TouchControls from "./touch-controls";
 export default function GamePlayer({ game }: { game: Game }) {
   const router = useRouter();
   const engine = ENGINES[game.id];
+  const supabase = createClient();
 
   const [paused, setPaused] = useState(false);
   const [skinId, setSkinId] = useState<SkinId | null>(null); // null = pre-hidratación
@@ -32,8 +35,76 @@ export default function GamePlayer({ game }: { game: Game }) {
   );
   const canvasRef = useRef<GameCanvasHandle>(null);
 
+  const [user, setUser] = useState<User | null>(null);
+  const [authTab, setAuthTab] = useState<"in" | "up">("in");
+  const [authUser, setAuthUser] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPass, setAuthPass] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authCheckEmail, setAuthCheckEmail] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (user && name === "INVITADO") {
+      setName(getDisplayName(user).toUpperCase().slice(0, 10));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const authSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+
+    if (authTab === "in") {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: authPass,
+      });
+      setAuthLoading(false);
+      if (error) {
+        setAuthError(error.message);
+        return;
+      }
+      return;
+    }
+
+    const { error } = await supabase.auth.signUp({
+      email: authEmail,
+      password: authPass,
+      options: {
+        data: { username: authUser },
+        emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth`,
+      },
+    });
+    setAuthLoading(false);
+    if (error) {
+      setAuthError(error.message);
+      return;
+    }
+    setAuthCheckEmail(true);
+  };
+
+  const [skipAuth, setSkipAuth] = useState(false);
+
   const { score, secondary, level } = stats;
   const showModal = stats.status === "gameover";
+  const showInlineAuth = !user && !saved && !skipAuth;
 
   const endGame = () => {
     canvasRef.current?.forceGameOver();
@@ -44,6 +115,13 @@ export default function GamePlayer({ game }: { game: Game }) {
     setSaving(false);
     setSaveError(false);
     setName("INVITADO");
+    setAuthTab("in");
+    setAuthUser("");
+    setAuthEmail("");
+    setAuthPass("");
+    setAuthError(null);
+    setAuthCheckEmail(false);
+    setSkipAuth(false);
     if (engine) setStats(engine.initialStats);
     setResetKey((k) => k + 1);
   };
@@ -51,10 +129,12 @@ export default function GamePlayer({ game }: { game: Game }) {
   const saveScore = async () => {
     setSaving(true);
     setSaveError(false);
-    const supabase = createClient();
+    const {
+      data: { user: current },
+    } = await supabase.auth.getUser();
     const { error } = await supabase
       .from("scores")
-      .insert({ game_id: game.id, player_name: name, score });
+      .insert({ game_id: game.id, player_name: name, score, user_id: current?.id ?? null });
     setSaving(false);
     if (error) {
       setSaveError(true);
@@ -177,7 +257,103 @@ export default function GamePlayer({ game }: { game: Game }) {
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
-            {!saved ? (
+            {showInlineAuth ? (
+              authCheckEmail ? (
+                <div style={{ margin: "18px 0", textAlign: "left" }}>
+                  <p className="mono" style={{ fontSize: 12, color: "var(--ink-dim)" }}>
+                    Enviamos un enlace de confirmación a <strong>{authEmail}</strong>. Confirma tu
+                    correo y luego iniciá sesión para guardar este puntaje.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={authSubmit} style={{ margin: "18px 0", textAlign: "left" }}>
+                  <div className="auth-tabs">
+                    <button
+                      type="button"
+                      className={authTab === "in" ? "on" : ""}
+                      onClick={() => setAuthTab("in")}
+                    >
+                      INICIAR SESIÓN
+                    </button>
+                    <button
+                      type="button"
+                      className={authTab === "up" ? "on" : ""}
+                      onClick={() => setAuthTab("up")}
+                    >
+                      CREAR CUENTA
+                    </button>
+                  </div>
+                  {authTab === "in" ? (
+                    <div className="field">
+                      <label>Correo electrónico</label>
+                      <input
+                        type="email"
+                        value={authEmail}
+                        onChange={(e) => setAuthEmail(e.target.value)}
+                        placeholder="jugador@vault.gg"
+                      />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="field">
+                        <label>Usuario</label>
+                        <input
+                          value={authUser}
+                          onChange={(e) => setAuthUser(e.target.value)}
+                          placeholder="px_kai"
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Correo electrónico</label>
+                        <input
+                          type="email"
+                          value={authEmail}
+                          onChange={(e) => setAuthEmail(e.target.value)}
+                          placeholder="jugador@vault.gg"
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div className="field">
+                    <label>Contraseña</label>
+                    <input
+                      type="password"
+                      value={authPass}
+                      onChange={(e) => setAuthPass(e.target.value)}
+                      placeholder="••••••••"
+                    />
+                  </div>
+                  {authError && (
+                    <div
+                      className="mono"
+                      style={{ color: "var(--magenta)", fontSize: 11, marginBottom: 8 }}
+                    >
+                      ▸ {authError}
+                    </div>
+                  )}
+                  <button
+                    className="btn yellow"
+                    type="submit"
+                    disabled={authLoading}
+                    style={{ width: "100%" }}
+                  >
+                    {authLoading
+                      ? "PROCESANDO…"
+                      : authTab === "in"
+                        ? "INICIAR SESIÓN Y GUARDAR"
+                        : "CREAR CUENTA"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => setSkipAuth(true)}
+                    style={{ width: "100%", marginTop: 8 }}
+                  >
+                    GUARDAR COMO INVITADO
+                  </button>
+                </form>
+              )
+            ) : !saved ? (
               <div className="input-row">
                 <input
                   value={name}
