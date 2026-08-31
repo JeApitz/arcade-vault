@@ -33,6 +33,22 @@ Agentes (todos solo bajo petición explícita por nombre):
 - Cada juego tiene su propio motor + canvas en `app/juegos/[id]/jugar/` (`<game>-engine.ts`, `<game>-canvas.tsx`, sprites/levels donde aplica), registrados en `engines.ts` y renderizados vía `game-player.tsx`.
 - Supabase: cliente en `app/lib/supabase/{client,server}.ts`; catálogo de juegos y scores en `app/lib/games.ts` / `app/lib/scores.ts`. Requiere `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_DB_PASSWORD` (ver `.env.template`).
 - Contacto vía Resend en `app/api/contact/route.ts`, requiere `RESEND_API_KEY`.
+- El esquema de DB versionado (para recrear producción) vive en `supabase/prod/*.sql`; runbook en `docs/produccion.md`. La instancia de producción NO es accesible por el MCP de Supabase; el MCP apunta solo a dev.
+
+## Cambios en la base de datos (OBLIGATORIO)
+
+Todo cambio de esquema o de datos de configuración en la DB de **dev** se hace **vía migración**, nunca con `execute_sql` suelto ni cambios manuales en el dashboard. Objetivo: poder replicar cada cambio en producción (sin acceso MCP) aplicando los mismos archivos.
+
+Flujo por cada cambio:
+
+1. Crear el archivo `supabase/migrations/<timestamp>_<nombre_snake_case>.sql` (timestamp `YYYYMMDDHHMMSS`). SQL idempotente cuando sea razonable (`if not exists`, `drop policy if exists` antes de `create policy`).
+2. Aplicarlo a dev con `mcp__supabase__apply_migration` (nombre = el del archivo, sin extensión), para que quede en el historial remoto de dev.
+3. Verificar con `mcp__supabase__execute_sql` (solo lectura) o `list_migrations`.
+4. Commit del `.sql` junto al código que lo necesita.
+5. Producción: el usuario pega ese mismo `.sql` en el SQL Editor de prod (ver `docs/produccion.md`). Nunca lo aplica Claude.
+
+`supabase/prod/01-schema.sql`..`03-hardening.sql` son la **baseline** (estado a 2026-08-31). Las nuevas migraciones van en `supabase/migrations/` y parten de esa baseline.
+
 - Styling via Tailwind CSS v4 (`@tailwindcss/postcss`), global styles in `app/globals.css`.
 - Path alias `@/*` maps to the repo root (`tsconfig.json`).
 - Desarrollo spec-driven: specs viven en `specs/NN-nombre.md` (estado + dependencias); juegos de referencia sin implementar en `references/started-games/`. Usa [fernando-skills](https://github.com/Klerith/fernando-skills) (`/spec`, `/spec-impl`) y el skill local `/spec-game`, instalados via `npx skills@latest add Klerith/fernando-skills`.
