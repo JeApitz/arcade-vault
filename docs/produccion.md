@@ -12,14 +12,15 @@ generó los `.sql` y esta guía a partir del estado real de dev (2026-08-31).
 
 Ejecutar **en orden**, cada archivo entero, en `Dashboard › SQL Editor` del proyecto de prod:
 
-| Paso | Archivo                             | Qué hace                                                                                  | Qué esperar                                                         |
-| ---- | ----------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| 1    | `supabase/prod/01-schema.sql`       | Crea `games` y `scores`, índice, RLS y las 4 políticas                                    | "Success. No rows returned"                                         |
-| 2    | `supabase/prod/02-seed-games.sql`   | Inserta las 5 filas del catálogo (`arkanoid`, `asteroides`, `frogger`, `snake`, `tetris`) | "Success" — 5 filas afectadas                                       |
-| 3    | `supabase/prod/03-hardening.sql`    | Grants mínimos para `anon`/`authenticated` + event trigger `ensure_rls`                   | "Success. No rows returned"                                         |
-| 4    | `supabase/prod/04-verificacion.sql` | 10 consultas de solo lectura                                                              | Contrastar cada resultado con el "esperado" comentado en el archivo |
+| Paso | Archivo                                     | Qué hace                                                                                                            | Qué esperar                                                         |
+| ---- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| 1    | `supabase/prod/01-schema.sql`               | Crea `games` y `scores`, índice, RLS y las 4 políticas                                                              | "Success. No rows returned"                                         |
+| 2    | `supabase/prod/02-seed-games.sql`           | Inserta las 5 filas del catálogo (`arkanoid`, `asteroides`, `frogger`, `snake`, `tetris`)                           | "Success" — 5 filas afectadas                                       |
+| 3    | `supabase/prod/03-hardening.sql`            | Grants mínimos para `anon`/`authenticated` + event trigger `ensure_rls`                                             | "Success. No rows returned"                                         |
+| 4    | `supabase/prod/04-verificacion.sql`         | 10 consultas de solo lectura                                                                                        | Contrastar cada resultado con el "esperado" comentado en el archivo |
+| 5    | `supabase/prod/05-usuario-solo-lectura.sql` | Rol `arcade_readonly` (solo lectura, para el pooler). **Opcional** — solo si se necesita acceso externo de consulta | Sustituir el password placeholder antes de ejecutar; ver §6         |
 
-Los pasos 1–3 son **idempotentes**: re-ejecutarlos no da error ni duplica datos.
+Los pasos 1–3 y 5 son **idempotentes**: re-ejecutarlos no da error ni duplica datos.
 
 `scores` arranca **vacío** y hay **0 usuarios**: el leaderboard empieza limpio. Los 14 scores
 y 3 usuarios de dev son datos de prueba y no se migran.
@@ -145,3 +146,112 @@ De `references/security/security-status.md`, sin resolver:
   interpola `name` en la cabecera `subject` del correo (riesgo de inyección de cabeceras).
 
 Son bugs de código, no de la migración. Conviene arreglarlos antes del lanzamiento.
+
+---
+
+## 7. Acceso de solo lectura por pooler (`arcade_readonly`)
+
+Opcional. Para dar acceso de **consulta** a prod (a una persona o herramienta) sin compartir
+el password del rol `postgres` de Supabase ni abrir escritura.
+
+### Crear el rol
+
+1. Abrir `supabase/prod/05-usuario-solo-lectura.sql`.
+2. Sustituir `<<CAMBIAR_ESTE_PASSWORD>>` por un password fuerte (guardarlo aparte; no es el de
+   Supabase).
+3. Pegar el archivo entero en `Dashboard › SQL Editor` de prod. Esperar
+   "Success. No rows returned" y revisar los `NOTICE` (dicen si entró `BYPASSRLS` o el fallback
+   de políticas).
+4. Contrastar las 3 consultas de verificación del final: `select` = `t`, `insert/update/delete`
+   = `f` en `games`/`scores`, `auth_usage` = `f`.
+
+Qué puede hacer el rol: `SELECT` sobre cualquier tabla de `public` (hoy `games` y `scores`).
+Qué **no** puede: escribir (transacciones forzadas a read-only), crear objetos, ejecutar
+funciones, ni tocar `auth` / `storage` / `vault`. Límite de 5 conexiones, `statement_timeout`
+30 s.
+
+### Cadena de conexión (pooler / Supavisor)
+
+Datos fijos de prod (host y región salen de `Dashboard › Connect`; para la región de este
+proyecto son `us-west-2` / `aws-0`):
+
+| Campo    | Valor                                                            |
+| -------- | ---------------------------------------------------------------- |
+| Host     | `aws-0-us-west-2.pooler.supabase.com`                            |
+| Puerto   | `6543` (transaction) · `5432` (session)                          |
+| Database | `postgres`                                                       |
+| Usuario  | `arcade_readonly.<project-ref>`                                  |
+| Password | el de `arcade_readonly` (**NO** al repo — ver "Datos sensibles") |
+| SSL      | obligatorio (`sslmode=require`)                                  |
+
+- `<project-ref>` = el mismo ID que va en `NEXT_PUBLIC_SUPABASE_URL`
+  (`https://<project-ref>.supabase.co`). El pooler **exige** el sufijo `.<project-ref>` en el
+  usuario también para roles personalizados; sin él, `password authentication failed`.
+- **6543** = transaction mode: para consultas sueltas / scripts. Sin `PREPARE` / `LISTEN` /
+  cursores con nombre entre statements.
+- **5432** = session mode: para clientes GUI (DBeaver, pgAdmin) o sesiones persistentes.
+
+URI de ejemplo (transaction mode):
+
+```
+postgresql://arcade_readonly.<project-ref>:<password>@aws-0-us-west-2.pooler.supabase.com:6543/postgres?sslmode=require
+```
+
+### Conectar desde DBeaver (driver PostgreSQL)
+
+Pestaña **General › Connect by: Host**:
+
+- Host `aws-0-us-west-2.pooler.supabase.com` · Port `5432` · Database `postgres`
+- "Show all databases": desmarcado
+- Usuario `arcade_readonly.<project-ref>` · Contraseña: la del rol
+- Pestaña **SSL**: marcar _Use SSL_, SSL mode `require`
+
+### Rotar el password
+
+```sql
+alter role arcade_readonly with password '<nuevo-password>';
+```
+
+Un `alter role ... password` corta las conexiones existentes en el siguiente handshake; hay
+que actualizar el password en cada cliente.
+
+### Datos sensibles — NUNCA al repo ni a un canal público
+
+`.gitignore` ya excluye `.env*` (salvo `.env.template`, que solo tiene `XXXX`). Verificado:
+ningún secreto real está versionado. Mantener así:
+
+| Secreto                                | Dónde vive                           | Nunca hacer                                      |
+| -------------------------------------- | ------------------------------------ | ------------------------------------------------ |
+| Password maestro de la DB (`postgres`) | gestor de secretos / panel hosting   | pegarlo en chats, issues, commits, capturas      |
+| Password de `arcade_readonly`          | gestor de secretos del que consulta  | ponerlo en `docs/`, en el `.sql`, o en un commit |
+| `RESEND_API_KEY`                       | env del hosting                      | commitear `.env.local`                           |
+| `service_role` key de Supabase         | no se usa en el código; que siga así | ponerla en cualquier `NEXT_PUBLIC_*`             |
+
+Públicos (pueden ir al repo/cliente): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+(anon key), `NEXT_PUBLIC_SITE_URL`, el host del pooler y el `<project-ref>`.
+
+Si un password se filtra (se pegó en un chat, un log, una captura): rotarlo de inmediato
+— el maestro en `Project Settings › Database › Reset database password`, el de `arcade_readonly`
+con el `alter role` de arriba.
+
+### Verificación de la conexión (hecha 2026-08-31)
+
+Conectado como `arcade_readonly` por el pooler, confirmado:
+
+| Prueba                                            | Resultado esperado                                  |
+| ------------------------------------------------- | --------------------------------------------------- |
+| `select current_user`                             | `arcade_readonly`                                   |
+| `select current_setting('transaction_read_only')` | `on`                                                |
+| `select count(*) from public.games`               | `5`                                                 |
+| `insert / update / delete` en `public.scores`     | error _cannot execute … in a read-only transaction_ |
+| `select … from auth.users`                        | error _permission denied for schema auth_           |
+| `create table public.__x(...)`                    | error (read-only)                                   |
+
+### Eliminar el rol
+
+```sql
+drop policy if exists "arcade_readonly select" on public.games;
+drop policy if exists "arcade_readonly select" on public.scores;
+drop owned by arcade_readonly;
+drop role arcade_readonly;
+```
