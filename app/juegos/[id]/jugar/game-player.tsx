@@ -6,6 +6,7 @@ import type { User } from "@supabase/supabase-js";
 import type { Game } from "../../../data/games";
 import { createClient } from "../../../lib/supabase/client";
 import { getDisplayName } from "../../../components/user-avatar";
+import { savePending, readPending, clearPending } from "../../../lib/pending-score";
 import { ENGINES, type GameCanvasHandle, type GameStats } from "./engines";
 import { DEFAULT_SKIN, SKIN_IDS, SKIN_LABELS, readSkinId, writeSkinId, type SkinId } from "./skins";
 import TouchControls from "./touch-controls";
@@ -98,13 +99,52 @@ export default function GamePlayer({ game }: { game: Game }) {
       return;
     }
     setAuthCheckEmail(true);
+    savePending(game.id, score);
   };
 
-  const [skipAuth, setSkipAuth] = useState(false);
+  const [skipSave, setSkipSave] = useState(false);
+
+  // Rescate del puntaje pendiente (spec 17): guardado en localStorage por un
+  // invitado que se registró; se ofrece guardarlo al volver con sesión activa.
+  const [pending, setPending] = useState<number | null>(null);
+  const [pendingSaving, setPendingSaving] = useState(false);
+  const [pendingSaved, setPendingSaved] = useState(false);
+  const [pendingError, setPendingError] = useState(false);
+
+  useEffect(() => {
+    // readPending toca localStorage: solo en cliente, tras montar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPending(user ? readPending(game.id) : null);
+  }, [user, game.id]);
+
+  const savePendingScore = async () => {
+    if (pending == null) return;
+    setPendingSaving(true);
+    setPendingError(false);
+    const {
+      data: { user: current },
+    } = await supabase.auth.getUser();
+    if (!current) {
+      setPendingSaving(false);
+      setPendingError(true);
+      return;
+    }
+    const playerName = getDisplayName(current).toUpperCase().slice(0, 10);
+    const { error } = await supabase
+      .from("scores")
+      .insert({ game_id: game.id, player_name: playerName, score: pending, user_id: current.id });
+    setPendingSaving(false);
+    if (error) {
+      setPendingError(true);
+      return;
+    }
+    clearPending(game.id);
+    setPending(null);
+    setPendingSaved(true);
+  };
 
   const { score, secondary, level } = stats;
   const showModal = stats.status === "gameover";
-  const showInlineAuth = !user && !saved && !skipAuth;
 
   const endGame = () => {
     canvasRef.current?.forceGameOver();
@@ -121,7 +161,7 @@ export default function GamePlayer({ game }: { game: Game }) {
     setAuthPass("");
     setAuthError(null);
     setAuthCheckEmail(false);
-    setSkipAuth(false);
+    setSkipSave(false);
     if (engine) setStats(engine.initialStats);
     setResetKey((k) => k + 1);
   };
@@ -145,6 +185,41 @@ export default function GamePlayer({ game }: { game: Game }) {
 
   return (
     <div className={`av-player fade-in${engine?.fitViewport ? " av-player--fit" : ""}`}>
+      {(pending != null || pendingSaved) && (
+        <div
+          className="mono"
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: 12,
+            padding: "10px 14px",
+            marginBottom: 12,
+            border: "1px solid var(--line)",
+            fontSize: 12,
+          }}
+        >
+          {pendingSaved ? (
+            <span style={{ color: "var(--ink-dim)" }}>▸ PUNTAJE PENDIENTE GUARDADO_</span>
+          ) : (
+            <>
+              <span style={{ color: "var(--ink-dim)" }}>
+                Tenés un puntaje sin guardar de una partida anterior:{" "}
+                <strong style={{ color: "var(--ink)" }}>{pending?.toLocaleString("es-ES")}</strong>
+              </span>
+              <button className="btn yellow" onClick={savePendingScore} disabled={pendingSaving}>
+                {pendingSaving ? "GUARDANDO…" : "GUARDAR PUNTAJE PENDIENTE"}
+              </button>
+              {pendingError && (
+                <span style={{ color: "var(--magenta)" }}>
+                  ▸ ERROR AL GUARDAR. INTENTA DE NUEVO_
+                </span>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       <div className="player-hud">
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
           <div className="hud-stat">
@@ -257,12 +332,14 @@ export default function GamePlayer({ game }: { game: Game }) {
             <h2>FIN DEL JUEGO</h2>
             <div className="final-label">PUNTUACIÓN FINAL</div>
             <div className="final">{score.toLocaleString("es-ES")}</div>
-            {showInlineAuth ? (
-              authCheckEmail ? (
+            {!user ? (
+              skipSave ? null : authCheckEmail ? (
                 <div style={{ margin: "18px 0", textAlign: "left" }}>
                   <p className="mono" style={{ fontSize: 12, color: "var(--ink-dim)" }}>
-                    Enviamos un enlace de confirmación a <strong>{authEmail}</strong>. Confirma tu
-                    correo y luego iniciá sesión para guardar este puntaje.
+                    Enviamos un enlace de confirmación a <strong>{authEmail}</strong>. Guardamos
+                    este puntaje ({score.toLocaleString("es-ES")}) en este navegador durante 7 días:
+                    confirma tu correo, volvé a esta página del juego en este mismo navegador e
+                    iniciá sesión para guardarlo en el ranking.
                   </p>
                 </div>
               ) : (
@@ -346,10 +423,10 @@ export default function GamePlayer({ game }: { game: Game }) {
                   <button
                     type="button"
                     className="btn ghost"
-                    onClick={() => setSkipAuth(true)}
+                    onClick={() => setSkipSave(true)}
                     style={{ width: "100%", marginTop: 8 }}
                   >
-                    GUARDAR COMO INVITADO
+                    SEGUIR SIN GUARDAR
                   </button>
                 </form>
               )
